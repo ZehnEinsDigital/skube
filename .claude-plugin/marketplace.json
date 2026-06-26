@@ -1,0 +1,16 @@
+{
+  "name": "skube",
+  "owner": {
+    "name": "Skube"
+  },
+  "metadata": {
+    "description": "Skube — the Amazon listing copilot for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "skube",
+      "source": "./plugin",
+      "description": "Skube — Amazon listing copilot for Claude Code. Create, validate, update, and fix marketplace listings; the reasoning runs on your plan, your credentials and uploads stay in the Skube cloud."
+    }
+  ]
+}

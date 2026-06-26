@@ -1,0 +1,5 @@
+.env
+.skube/
+__pycache__/
+*.pyc
+.DS_Store

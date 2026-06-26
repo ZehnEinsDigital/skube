@@ -1,0 +1,16 @@
+{
+  "//": "Recommended restrictive settings for the Skube plugin. Defense-in-depth only — the real boundary is server-side (Amazon creds + live writes never leave the Skube cloud). Replaces any blanket Bash allow from the engine snapshot.",
+  "//env": "Static fallback for direct Bash python (the SessionStart hook is the primary, project-scoped path). SKUBE_GATEWAY + the shim dir on PYTHONPATH activate sitecustomize.py; harmless in non-engine sessions because gateway_redirect.activate() no-ops when core.amazon_api isn't importable.",
+  "env": {
+    "SKUBE_GATEWAY": "true",
+    "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/scripts/_gateway_shim:${PYTHONPATH}"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(*sellingpartnerapi*)",
+      "WebFetch(domain:sellingpartnerapi-na.amazon.com)",
+      "WebFetch(domain:sellingpartnerapi-eu.amazon.com)",
+      "WebFetch(domain:sellingpartnerapi-fe.amazon.com)"
+    ]
+  }
+}
