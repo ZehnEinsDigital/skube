@@ -43,15 +43,17 @@ walks you through the listing step by step, pausing whenever it needs a decision
 
 ## Commands
 
+You mostly **just talk to it** — e.g. *"erstelle Listings aus dieser Datei"* or *"wie viel hab ich verkauft?"*.
+The slash commands are there if you prefer them:
+
 | Command | What it does |
 |---------|--------------|
-| `/skube:connect` | One-time: save your Skube API key |
+| `/skube:connect` | One-time: connect your Skube account (browser, nothing to paste) |
 | `/skube:create <feed> [brand]` | Build Amazon listings from a supplier feed |
-| `/skube:validate <sku\|payload>` | Server-side validation preview (no write) |
 | `/skube:status <sku>` | What Amazon reports about a listing right now |
-| `/skube:update <skus> <change>` | Partial content update (keeps ASIN/reviews) |
+| `/skube:sales [--days N]` | Your real Amazon sales — units, revenue, sessions (PII-free) |
 | `/skube:diagnose <sku>` | Explain a rejection/suppression + propose a fix |
-| `/skube:ask <question>` | Free-form catalog / product-type questions |
+| `/skube:update <skus> <change>` | Partial content update (keeps ASIN/reviews) |
 
 ## How it works (and why it's safe)
 
