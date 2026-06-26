@@ -77,6 +77,20 @@ SOP+CONFIG for the Amazon checkpoints), plus the run context, and run it with th
   This project run folder is the **only** run location — **never read, reuse, or write runs in
   `~/.skube/engine/runs/`**. Each request is a **fresh** run; do not reuse a previous run's analysis or
   `column_mapping.json` unless the user explicitly says to continue an existing run.
+- **Recall prior runs (once the brand is known, before CP1):** ask the cloud what's been done for this brand
+  on this marketplace — `curl -s -H "Authorization: Bearer $SKUBE_API_KEY"
+  "$SKUBE_API_URL/v1/runs?brand=<brand>&marketplace=<marketplace>"` (key/url from `~/.skube/.env`). If it
+  returns prior runs, tell the user in plain words — e.g. *"We've done 2 runs for NordPure on Amazon DE (last
+  one 3 days ago, 40 listings). Want me to (a) reuse last time's column mapping so I don't re-analyze your
+  file, and/or (b) update the products that were listed before instead of creating duplicates?"* — then act
+  on the answer (use the **newest** prior run; if several and it's ambiguous, ask which):
+  - **Reuse mapping:** download it (`GET …/v1/runs/<run_id>/artifacts/column_mapping/download`, follow the
+    307), sanity-check it still fits the new file, then use it as CP1's mapping instead of analyzing from
+    scratch.
+  - **Update existing:** download the prior `listings` (`…/artifacts/listings/download`), diff the new feed by
+    **SKU/EAN** — SKUs already listed → the **update** path; genuinely new SKUs → the **create** path — and
+    tell the user the split ("40 to update, 8 new") before proceeding.
+  No prior runs → continue the fresh run normally.
   **Then perform CP0 setup with ONE deterministic command — never by hand** (with the pinned gateway env
   from step 0b, and the CHOSEN marketplace — not hardcoded "amazon"):
   ```
@@ -133,7 +147,20 @@ SOP+CONFIG for the Amazon checkpoints), plus the run context, and run it with th
   throttled — not your data), tell the user **once** ("local check passed X/0, live preview again in a few
   minutes") and **stop** — don't retry in a loop. Show the result in plain language. A **live upload happens
   ONLY after the user explicitly approves it.**
-- **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message.
+- **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
+  run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
+  brand can reuse it:**
+  1. Create the run record — `curl -s -X POST -H "Authorization: Bearer $SKUBE_API_KEY" -H "Content-Type:
+     application/json" "$SKUBE_API_URL/v1/runs" -d '{"brand":"<brand>","marketplace":"<marketplace>",
+     "country":"<country>","connection_label":"<label>","dry_run":<true|false>,
+     "status":"<succeeded|partial|failed>","summary":{"skus_in":<n>,"listings_created":<n>,
+     "listings_updated":<n>,"errors":<n>}}'` — it returns the run `id`.
+  2. Upload the two reusable outputs from the run folder — the engine's `column_mapping.json`, and a
+     `listings.json` keyed by **SKU/EAN** that you build from the final fill output (the diff baseline for
+     next time): `curl -s -X PUT -H "Authorization: Bearer $SKUBE_API_KEY" -F "file=@<run>/column_mapping.json"
+     "$SKUBE_API_URL/v1/runs/<id>/artifacts/column_mapping"` and the same for `listings`
+     (`-F "file=@<run>/listings.json" …/artifacts/listings`).
+  Best-effort: if reporting fails, don't block the user — the listings are already created.
 
 ## Rules
 - One checkpoint, then wait for the user. Surface every question/result in plain language in THIS chat.

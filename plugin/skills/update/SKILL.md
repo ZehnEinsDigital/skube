@@ -16,6 +16,11 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
 
 1. Silent: if `~/.skube/.env` has no `SKUBE_API_KEY`, ask them to run `/skube:connect` once, then stop.
    Otherwise run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth + brain).
+   - **Brand-wide update** ("update all NordPure listings")? Recall the baseline from the run-memory:
+     `curl -s -H "Authorization: Bearer $SKUBE_API_KEY"
+     "$SKUBE_API_URL/v1/runs?brand=<brand>&marketplace=<marketplace>"`, then download the newest run's
+     `listings` (`…/v1/runs/<run_id>/artifacts/listings/download`) — it's what was created, keyed by SKU/EAN,
+     i.e. your set of SKUs + their prior values to patch against. For a single named SKU, skip this.
 2. For each SKU, read its current state via the status proxy, then build a JSON-Patch payload (only the
    attributes to change) — use the engine in `~/.skube/engine` with the gateway env (SKUBE_GATEWAY=true,
    the `_gateway_shim` on PYTHONPATH, key/url from `~/.skube/.env`).
