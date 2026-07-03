@@ -28,7 +28,9 @@ DEFAULT_API_URL = "https://api.skube.app"
 
 
 def _engine_dir() -> pathlib.Path:
-    """The auto-provisioned engine project — mirrors bootstrap.DEFAULT_ENGINE_DIR."""
+    """The legacy durable auto-provisioned engine project — mirrors bootstrap.DEFAULT_ENGINE_DIR.
+    No longer the normal auto-provision target (T3 moved that into the ephemeral session
+    dir), but still recognized for back-compat / SKUBE_ENGINE_DIR overrides."""
     return pathlib.Path.home() / ".skube" / "engine"
 
 
@@ -37,7 +39,8 @@ def _is_engine_project(project_dir: str) -> bool:
 
     Compares realpaths against ``~/.skube/engine``; also accepts any path whose tail is
     ``.skube/engine`` (handles a symlinked/relocated HOME where the realpaths differ but
-    the path still clearly names the engine project).
+    the path still clearly names the engine project). ALSO accepts the ephemeral,
+    per-session engine dir T3 introduced: ``~/.skube/.sessions/skube-run-*/engine``.
     """
     if not project_dir:
         return False
@@ -51,7 +54,16 @@ def _is_engine_project(project_dir: str) -> bool:
     except Exception:
         pass
     parts = resolved.parts
-    return len(parts) >= 2 and parts[-2] == ".skube" and parts[-1] == "engine"
+    if len(parts) >= 2 and parts[-2] == ".skube" and parts[-1] == "engine":
+        return True
+    # Ephemeral session engine: .../.skube/.sessions/skube-run-*/engine
+    return (
+        len(parts) >= 4
+        and parts[-1] == "engine"
+        and parts[-3] == ".sessions"
+        and parts[-4] == ".skube"
+        and parts[-2].startswith("skube-run-")
+    )
 
 
 def _load_dotenv(path: pathlib.Path) -> dict:
@@ -97,7 +109,54 @@ def _shim_dir() -> str:
     return str(pathlib.Path(__file__).resolve().parent / "_gateway_shim")
 
 
+def _welcome_if_not_connected() -> None:
+    """First-run onboarding: if this device has no Skube connection yet (no SKUBE_API_KEY in
+    ~/.skube/.env), hand the model ONE line of context so it greets the user with the single
+    action that matters. Silent once connected. Never raises, never prints secrets."""
+    try:
+        dotenv = _load_dotenv(pathlib.Path.home() / ".skube" / ".env")
+        if dotenv.get("SKUBE_API_KEY", "").strip():
+            return  # connected — stay silent
+        import json
+
+        context = (
+            "Skube ist installiert, aber dieses Gerät ist noch nicht verbunden. "
+            "WENN der Nutzer etwas über Listings/Marktplätze/Skube sagt ODER die Session gerade "
+            "erst beginnt, begrüße ihn mit GENAU EINER freundlichen Zeile (Sprache des Nutzers, "
+            "Deutsch wenn unklar): '👋 Skube ist startklar. Tippe /skube:connect — öffnet kurz "
+            "deinen Browser, kein Schlüssel nötig. Danach sag einfach, was du listen willst.' "
+            "Keine technischen Details, keine weiteren Schritte, kein Jargon."
+        )
+        print(json.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": context,
+            }
+        }))
+    except Exception:
+        pass
+
+
+def _reap_expired_best_effort() -> None:
+    """Belt-and-suspenders reap on SessionStart: SessionEnd is best-effort (a hard kill can
+    skip it), so also sweep expired session dirs here. session_cleanup.py is a sibling
+    script, not an importable package module — load it by file path. Never breaks
+    session start."""
+    try:
+        import importlib.util
+
+        p = pathlib.Path(__file__).resolve().parent / "session_cleanup.py"
+        spec = importlib.util.spec_from_file_location("skube_session_cleanup", p)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.reap_expired()
+    except Exception:
+        pass
+
+
 def main() -> None:
+    _reap_expired_best_effort()
+    _welcome_if_not_connected()
     env_file = os.environ.get("CLAUDE_ENV_FILE", "").strip()
     if not env_file:
         return  # nowhere to write session env — nothing to do

@@ -36,8 +36,9 @@ delivered to your machine and saved to `~/.skube/.env` automatically; you never 
 ```
 /skube:create ./my-supplier-feed.csv
 ```
-The engine downloads itself on first run (into `~/.skube/engine`), pulls the current Skube "brain", and
-walks you through the listing step by step, pausing whenever it needs a decision from you.
+The engine downloads itself on first run (into an ephemeral per-session dir under `~/.skube/.sessions/`,
+cleaned up when the session ends), pulls the current Skube "brain", and walks you through the listing
+step by step, pausing whenever it needs a decision from you.
 
 > Amazon credentials live only in the Skube web app's encrypted vault — store them there once.
 

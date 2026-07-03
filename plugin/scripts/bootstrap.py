@@ -15,17 +15,88 @@ import io
 import json
 import os
 import pathlib
+import ssl
+import sys
 import tarfile
+import tempfile
+import time
 import urllib.error
 import urllib.request
 
 DEFAULT_API_URL = "https://api.skube.app"
-DEFAULT_ENGINE_DIR = pathlib.Path.home() / ".skube" / "engine"  # auto-provisioned snapshot
+# Legacy durable engine location. No longer the auto-provision target (T3): the engine is
+# now provisioned into the ephemeral session dir (session_dir / "engine") so it is reaped
+# alongside the brain. Kept only as the path session_env.py still recognizes for back-compat
+# / SKUBE_ENGINE_DIR overrides that happen to point here.
+DEFAULT_ENGINE_DIR = pathlib.Path.home() / ".skube" / "engine"
 _MIN_INJECTED_RULES = 1000  # engine CP1 gate
 CACHE_MARKET = "DE"  # engine reads data/amazon_cache/<market>/; DE is the first slice
+# A session's files are reaped after this lease expires (crash-safety). 24h so an ALL-DAY
+# working session outlives the lease — a new window's SessionStart reap must never delete a
+# still-running session's engine mid-run. The gateway shim also re-stamps the lease on every
+# gateway call (heartbeat), so truly long sessions keep extending it.
+_SESSION_TTL_SECONDS = 24 * 3600
 # Deny rule for the provisioned engine project's Claude settings: no direct SP-API egress
 # from the engine project (all SP-API flows through the Skube cloud gateway).
 _SPAPI_DENY = "Bash(*sellingpartnerapi*)"
+
+
+def _ca_ssl_context() -> ssl.SSLContext:
+    """CA bundle for our HTTPS calls. python.org Python on macOS ships NO CA certs, so the
+    stdlib default context fails every HTTPS request with CERTIFICATE_VERIFY_FAILED (the #1
+    first-run onboarding failure). Resolve a real bundle: certifi if importable (most envs),
+    else a known system bundle, else the stdlib default. Stays stdlib-only — certifi is
+    optional, never a hard dependency."""
+    try:
+        import certifi  # noqa: PLC0415 — optional, guarded; not a required dependency
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:  # noqa: BLE001 — any certifi issue falls through to system bundles
+        pass
+    for _path in (
+        "/etc/ssl/cert.pem",                    # macOS, some BSD
+        "/etc/ssl/certs/ca-certificates.crt",   # Debian/Ubuntu
+        "/etc/pki/tls/certs/ca-bundle.crt",     # RHEL/Fedora
+        "/usr/local/etc/openssl/cert.pem",      # Homebrew OpenSSL
+    ):
+        if os.path.exists(_path):
+            try:
+                return ssl.create_default_context(cafile=_path)
+            except Exception:  # noqa: BLE001
+                continue
+    return ssl.create_default_context()
+
+
+_SSL_CTX = _ca_ssl_context()
+
+
+def _sessions_root() -> pathlib.Path:
+    return pathlib.Path.home() / ".skube" / ".sessions"
+
+
+def new_session_dir() -> pathlib.Path:
+    """Create a fresh, leased, per-session dir the engine runs from this session only."""
+    root = _sessions_root()
+    root.mkdir(parents=True, exist_ok=True)
+    sess = pathlib.Path(tempfile.mkdtemp(prefix="skube-run-", dir=str(root)))
+    (sess / ".skube_lease").write_text(str(time.time() + _SESSION_TTL_SECONDS), encoding="utf-8")
+    return sess
+
+
+def write_brain_reference(bundle: dict, session_dir: pathlib.Path) -> None:
+    """Write the brain reference + injected_rules INTO the ephemeral session dir (never durable)."""
+    (session_dir / "brain.json").write_text(
+        json.dumps(bundle, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (session_dir / "injected_rules.md").write_text(
+        assemble_injected_rules(bundle), encoding="utf-8"
+    )
+    # Only when the server actually minted one: older/secretless servers don't send a
+    # "freshness" key, and we must not write an empty/placeholder file in that case.
+    freshness = bundle.get("freshness")
+    if freshness:
+        (session_dir / "freshness.json").write_text(
+            json.dumps(freshness, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
 
 def _config_env_path() -> pathlib.Path:
@@ -80,8 +151,8 @@ def validate_config(env: dict) -> list[str]:
     """Return a list of human-readable config errors (empty = OK).
 
     Only SKUBE_API_KEY is required. SKUBE_ENGINE_DIR is OPTIONAL: unset = the plugin
-    auto-provisions the engine into DEFAULT_ENGINE_DIR; set = an explicit (writable)
-    engine dir the user manages themselves (dev/override).
+    auto-provisions the engine into the ephemeral per-session dir (see new_session_dir);
+    set = an explicit (writable) engine dir the user manages themselves (dev/override).
     """
     errors: list[str] = []
     key = env.get("SKUBE_API_KEY", "")
@@ -123,7 +194,7 @@ def fetch_brain(api_url: str, api_key: str, marketplace: str = "amazon") -> dict
         headers={"Authorization": f"Bearer {api_key}"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 (trusted Skube host)
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:  # noqa: S310 (trusted Skube host)
             return json.loads(resp.read())
     except urllib.error.HTTPError as exc:
         if exc.code == 402:
@@ -133,12 +204,33 @@ def fetch_brain(api_url: str, api_key: str, marketplace: str = "amazon") -> dict
         raise SystemExit(f"SKUBE: could not reach the Skube API: {exc}")
 
 
+def start_run(api_url: str, api_key: str) -> str | None:
+    """Mint a per-run token (Task 9 chokepoint): POST /v1/run/start with the same Bearer
+    auth as fetch_brain. Soft rollout — ANY failure (network, non-200, malformed JSON) is
+    caught and returns None so preflight NEVER crashes over this; the run just proceeds
+    without a run_id, and downstream endpoints only verify one when it's present."""
+    req = urllib.request.Request(
+        f"{api_url.rstrip('/')}/v1/run/start",
+        data=b"",
+        headers={"Authorization": f"Bearer {api_key}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:  # noqa: S310 (trusted Skube host)
+            body = json.loads(resp.read())
+        run_id = body.get("run_id")
+        return run_id if isinstance(run_id, str) and run_id else None
+    except Exception as exc:  # noqa: BLE001 — soft rollout: never crash preflight over this
+        print(f"SKUBE: could not mint a run token (continuing without one): {exc}", file=sys.stderr)
+        return None
+
+
 def _post_json(url: str, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         url, data=data, headers={"Content-Type": "application/json"}, method="POST"
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 (trusted Skube host)
+    with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:  # noqa: S310 (trusted Skube host)
         return json.loads(resp.read())
 
 
@@ -217,7 +309,7 @@ def provision_engine(api_url: str, api_key: str, dest: pathlib.Path, marketplace
         headers["If-None-Match"] = f'"{cached}"'
     req = urllib.request.Request(f"{api_url.rstrip('/')}/v1/engine/{marketplace}", headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310 (trusted Skube host)
+        with urllib.request.urlopen(req, timeout=120, context=_SSL_CTX) as resp:  # noqa: S310 (trusted Skube host)
             blob = resp.read()
             digest = (resp.headers.get("X-Engine-Snapshot-Hash") or "").strip()
     except urllib.error.HTTPError as exc:
@@ -237,13 +329,12 @@ def provision_engine(api_url: str, api_key: str, dest: pathlib.Path, marketplace
 def harden_engine_claude_settings(engine_dir: pathlib.Path) -> pathlib.Path:
     """Harden the provisioned engine project's Claude settings (idempotent).
 
-    When the user opens ``~/.skube/engine`` as a Claude Code project, its
-    ``.claude/settings.local.json`` governs tool permissions. The engine snapshot may ship
-    a blanket ``"Bash"`` allow — we REMOVE that and ensure a ``sellingpartnerapi`` Bash deny
-    is present, so the engine project can never make a direct SP-API egress (all SP-API flows
-    through the Skube cloud gateway). Re-applied on every provision; creates a minimal file
-    with just the deny if none exists. Never the real boundary (that's server-side), but
-    defense-in-depth on the customer's own machine.
+    The engine's ``.claude/settings.local.json`` governs tool permissions. The engine
+    snapshot may ship a blanket ``"Bash"`` allow — we REMOVE that and ensure a deny rule
+    on the marketplace auth host is present, so the engine project can never make direct
+    API egress (all flows go through the Skube cloud gateway). Re-applied on every
+    provision; creates a minimal file with just the deny if none exists. Never the real
+    boundary (that's server-side), but defense-in-depth on the customer's own machine.
     """
     settings_path = engine_dir / ".claude" / "settings.local.json"
     settings: dict = {}
@@ -314,6 +405,33 @@ def seed_engine(bundle: dict, engine_dir: pathlib.Path) -> list[str]:
     return seeded
 
 
+def _export_session_env(
+    session_dir: pathlib.Path, engine_dir: pathlib.Path, run_id: str | None = None
+) -> None:
+    """Export SKUBE_SESSION_DIR (+ SKUBE_ENGINE_DIR, + SKUBE_RUN_ID) into $CLAUDE_ENV_FILE if
+    present, so every Bash-tool command this session — and session_cleanup.py's
+    reap_current() on SessionEnd — can find the ephemeral session/engine dirs (and the
+    per-run token, Task 9). Follows the same append-only, never-crash pattern as
+    session_env.py's env-file writer. Best-effort: if CLAUDE_ENV_FILE isn't set (e.g.
+    running bootstrap standalone), this is a no-op. ``run_id`` is only exported when the
+    server actually minted one (soft rollout: /v1/run/start may have failed/been skipped).
+    """
+    env_file = os.environ.get("CLAUDE_ENV_FILE", "").strip()
+    if not env_file:
+        return
+    lines = [
+        f"export SKUBE_SESSION_DIR={session_dir}",
+        f"export SKUBE_ENGINE_DIR={engine_dir}",
+    ]
+    if run_id:
+        lines.append(f"export SKUBE_RUN_ID={run_id}")
+    try:
+        with open(env_file, "a", encoding="utf-8") as fh:
+            fh.write("\n".join(lines) + "\n")
+    except Exception:  # noqa: BLE001 — never break the run over env-file plumbing
+        pass
+
+
 def main() -> None:
     load_dotenv()
     env = os.environ
@@ -327,34 +445,51 @@ def main() -> None:
     # so the existing single-marketplace flow is unchanged when nothing is pinned.
     marketplace = (env.get("SKUBE_PLATFORM") or "amazon").strip().lower() or "amazon"
 
+    # Everything session-scoped and ephemeral: no durable brain/engine copy survives past
+    # this run (reaped by session_cleanup.py per its lease — see T3).
+    session_dir = new_session_dir()
+
     # Engine: an explicit SKUBE_ENGINE_DIR is a user-managed override (dev); otherwise
-    # auto-provision the snapshot into ~/.skube/engine so onboarding needs only the key.
+    # auto-provision the snapshot into the EPHEMERAL session dir (not the durable
+    # ~/.skube/engine) so it is shredded on SessionEnd / lease expiry along with the brain.
     override = env.get("SKUBE_ENGINE_DIR", "").strip()
     if override:
         engine_dir = pathlib.Path(override).expanduser()
         engine_source = "override"
     else:
-        engine_dir = provision_engine(api_url, api_key, DEFAULT_ENGINE_DIR, marketplace=marketplace)
+        engine_dir = provision_engine(
+            api_url, api_key, session_dir / "engine", marketplace=marketplace
+        )
         engine_source = "auto"
 
     # Harden the engine project's Claude settings so opening it can't egress to SP-API.
     harden_engine_claude_settings(engine_dir)
 
     bundle = fetch_brain(api_url, api_key, marketplace=marketplace)
+    write_brain_reference(bundle, session_dir)
 
-    # Reference copy for debugging.
-    brain_dir = pathlib.Path(env.get("SKUBE_BRAIN_DIR", ".skube"))
-    brain_dir.mkdir(parents=True, exist_ok=True)
-    (brain_dir / "brain.json").write_text(json.dumps(bundle, ensure_ascii=False, indent=2))
-    (brain_dir / "injected_rules.md").write_text(assemble_injected_rules(bundle), encoding="utf-8")
+    # Task 9 chokepoint: bind this run to a live, entitled account. Soft rollout — if the mint
+    # fails, run_id is None and we proceed without it (downstream endpoints only verify when set).
+    run_id = start_run(api_url, api_key)
 
-    seeded = seed_engine(bundle, engine_dir)
+    seeded = seed_engine(bundle, engine_dir)  # engine still needs data/ seeded to pass CP1
+
+    _export_session_env(session_dir, engine_dir, run_id)
 
     print(
         f"SKUBE ready: brain {bundle.get('version_hash', '?')[:12]} model={bundle.get('model', '?')} "
         f"engine[{engine_source}] seeded[{', '.join(seeded)}] into {engine_dir}/data. "
-        f"Run engine checkpoints from {engine_dir} (cwd)."
+        f"Session brain reference: {session_dir}. Run engine checkpoints from {engine_dir} (cwd)."
     )
+    # Machine-readable fallback (ALWAYS printed, SKUBE_ENGINE_DIR last): when bootstrap runs
+    # via a plain Bash tool, CLAUDE_ENV_FILE may be absent so _export_session_env was a no-op —
+    # the skill then parses these lines instead of $SKUBE_ENGINE_DIR.
+    print(f"SKUBE_SESSION_DIR={session_dir.resolve()}")
+    # Task 9: emit the run token too (soft rollout — only when the server actually minted one),
+    # BEFORE SKUBE_ENGINE_DIR so that line stays the final, most-relied-upon fallback line.
+    if run_id:
+        print(f"SKUBE_RUN_ID={run_id}")
+    print(f"SKUBE_ENGINE_DIR={engine_dir.resolve()}")
 
 
 if __name__ == "__main__":
