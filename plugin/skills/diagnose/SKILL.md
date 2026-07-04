@@ -22,3 +22,10 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
 4. Build the corrective patch, validate it, and re-submit (op=patch) via the cloud — ONLY after the user confirms.
 
 Never handle Amazon credentials; all reads/writes run server-side via Skube.
+
+## Ausgabe-Design (PFLICHT)
+
+Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** nach
+`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`: Widget-Stufe (D-Struktur + Standard-JS, Kopf-Badge =
+Job-Name in Magenta #FF206E, Interaktives in Cobalt #3D5AFE), ohne Inline-Widget-Tool die
+Markdown-Karte. Ergebnisse vollständig, Input-Echo zugeklappt (fold), jede Zahl mit Woher.

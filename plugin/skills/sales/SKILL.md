@@ -27,3 +27,10 @@ clear "yes".
 
 These are REAL Amazon sales (not Baselinker), PII-free, read-only. Never handle Amazon credentials; the call
 runs server-side via Skube.
+
+## Ausgabe-Design (PFLICHT)
+
+Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** nach
+`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`: Widget-Stufe (D-Struktur + Standard-JS, Kopf-Badge =
+Job-Name in Magenta #FF206E, Interaktives in Cobalt #3D5AFE), ohne Inline-Widget-Tool die
+Markdown-Karte. Ergebnisse vollständig, Input-Echo zugeklappt (fold), jede Zahl mit Woher.

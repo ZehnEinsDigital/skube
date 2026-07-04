@@ -28,8 +28,8 @@ Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richt
 ```html
 <div style="padding:0.5rem 0;">
   <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
-    <div style="width:40px; height:40px; border-radius:10px; background:var(--fill-primary); display:flex; align-items:center; justify-content:center;">
-      <i class="ti ti-cube" style="font-size:22px; color:var(--on-primary);" aria-hidden="true"></i>
+    <div style="width:40px; height:40px; border-radius:10px; background:#FF206E; display:flex; align-items:center; justify-content:center;">
+      <i class="ti ti-cube" style="font-size:22px; color:#fff;" aria-hidden="true"></i>
     </div>
     <div style="flex:1;">
       <div style="font-size:18px; font-weight:500; color:var(--text-primary);">skube — dein Marktplatz-Kopilot</div>
@@ -40,33 +40,33 @@ Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richt
 
   <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin:14px 0 16px;">
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-packages" style="font-size:18px; color:var(--text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listings erstellen</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-packages" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listings erstellen</span></div>
       <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Aus deiner Produktdatei (Excel/CSV) fertige Listings bauen — Amazon-Konto erst zum Hochladen nötig.</div>
-      <button onclick="sendPrompt('/skube:create')" style="font-size:13px;">Listings erstellen ↗</button>
+      <button onclick="sendPrompt('/skube:create')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Listings erstellen ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:create</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-list-check" style="font-size:18px; color:var(--text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Status prüfen</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-list-check" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Status prüfen</span></div>
       <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Was ist live, was hängt, was fehlt?</div>
-      <button onclick="sendPrompt('/skube:status')" style="font-size:13px;">Status zeigen ↗</button>
+      <button onclick="sendPrompt('/skube:status')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Status zeigen ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:status</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-stethoscope" style="font-size:18px; color:var(--text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Problem finden</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-stethoscope" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Problem finden</span></div>
       <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Listing abgelehnt oder unsichtbar? Grund finden und beheben.</div>
-      <button onclick="sendPrompt('/skube:diagnose')" style="font-size:13px;">Grund finden ↗</button>
+      <button onclick="sendPrompt('/skube:diagnose')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Grund finden ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:diagnose</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-edit" style="font-size:18px; color:var(--text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listing ändern</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-edit" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listing ändern</span></div>
       <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Titel, Bullets, Beschreibung oder Attribute anpassen — ohne Neuaufbau.</div>
-      <button onclick="sendPrompt('/skube:update')" style="font-size:13px;">Listing ändern ↗</button>
+      <button onclick="sendPrompt('/skube:update')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Listing ändern ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:update</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-chart-bar" style="font-size:18px; color:var(--text-secondary);" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Verkäufe sehen</span></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-chart-bar" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Verkäufe sehen</span></div>
       <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Einheiten, Umsatz und Conversion — direkt von Amazon.</div>
-      <button onclick="sendPrompt('/skube:sales')" style="font-size:13px;">Verkäufe zeigen ↗</button>
+      <button onclick="sendPrompt('/skube:sales')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Verkäufe zeigen ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:sales</div>
     </div>
   </div>
@@ -88,13 +88,13 @@ Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richt
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>Decathlon</span>
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>Voelkner</span>
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>AboutYou</span>
-      <button onclick="sendPrompt('Was bekomme ich mit Skube Pro?')" style="font-size:12.5px; padding:3px 12px; border-radius:999px;">Mit Pro freischalten ↗</button>
+      <button onclick="sendPrompt('Was bekomme ich mit Skube Pro?')" style="font-size:12.5px; padding:3px 12px; border-radius:999px; color:#3D5AFE; border:1px solid rgba(61,90,254,.35);">Mit Pro freischalten ↗</button>
     </div>
   </div>
 
   <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted);">
     <i class="ti ti-message" style="font-size:16px;" aria-hidden="true"></i>
-    <span>Du kannst auch einfach fragen — zum Beispiel <a href="#" onclick="event.preventDefault(); sendPrompt('Welche Amazon-Kategorie passt für Boxspringbetten?')" style="color:var(--text-accent);">„Welche Kategorie passt für Boxspringbetten?"</a> · Diese Karte: /skube:start</span>
+    <span>Du kannst auch einfach fragen — zum Beispiel <a href="#" onclick="event.preventDefault(); sendPrompt('Welche Amazon-Kategorie passt für Boxspringbetten?')" style="color:#3D5AFE;">„Welche Kategorie passt für Boxspringbetten?"</a> · Diese Karte: /skube:start</span>
   </div>
 </div>
 ```

@@ -246,6 +246,9 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   `## <Emoji> Schritt n/7 · <Name> — <Status>`, ONE plain sentence, `Was | Ergebnis | Woher` GFM
   tables, ```text blocks for trees (as many as the data needs), numbered questions with a bold
   recommendation, closing `**Weiter:**` line. NEVER ASCII boxes.
+  **Design:** all cards share ONE look (brand: magenta #FF206E = header badge + primary action,
+  cobalt #3D5AFE = interactive/section marks) — render_card.py emits it; any NON-checkpoint output
+  (e.g. SKU-meter report) follows `${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`.
   **Decisions:** when an AskUserQuestion tool is available, ALSO offer checkpoint decisions through
   it (options + recommendation) — the user clicks instead of typing.
 - **Never** tell the user to open a folder, open a project, `cd` anywhere, or run a slash command

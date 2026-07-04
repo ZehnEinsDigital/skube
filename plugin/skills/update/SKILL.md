@@ -31,3 +31,10 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
 4. Submit via `{SKUBE_API_URL}/v1/amazon/submit` (op=patch) — only after the user confirms.
 
 Partial update (UPDATE_PARTIAL), never delete. Never handle Amazon credentials; runs server-side via Skube.
+
+## Ausgabe-Design (PFLICHT)
+
+Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** nach
+`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`: Widget-Stufe (D-Struktur + Standard-JS, Kopf-Badge =
+Job-Name in Magenta #FF206E, Interaktives in Cobalt #3D5AFE), ohne Inline-Widget-Tool die
+Markdown-Karte. Ergebnisse vollständig, Input-Echo zugeklappt (fold), jede Zahl mit Woher.
