@@ -204,6 +204,20 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   locally validated; say so, and that the live check + upload need their seller account once: point them to
   the Skube web app's Connections page, and offer the alternative ("or I'll give you the finished listings
   as a file" — in the user's language). Never block the earlier steps on this.
+  **🔴 UPLOAD PREFLIGHT — check that live uploads are UNLOCKED before you try (do NOT skip):** real writes
+  are OFF by default per connection (`live_writes_enabled`). BEFORE attempting any upload, read it from
+  `GET $SKUBE_API_URL/v1/me/marketplaces` → the pinned connection's `live_writes_enabled`. If it is **false**,
+  do NOT submit anything (a `/submit` without a live token is only a silent preview — it writes nothing and
+  returns no id; never mistake that for an upload). Say ONE accurate line in the user's language:
+  *"Live uploads are still off for this connection. Turn them on once in the Skube web app → Connections →
+  your account → the ‚Live uploads' switch, then say ‚go' and I'll upload."* — **never invent a different UI
+  path**; that switch is the real and only place.
+  **The real upload flow (only when `live_writes_enabled` is true AND the user said go):** per SKU, first
+  `POST $SKUBE_API_URL/v1/amazon/live-intents` (body: `credential_id`, `marketplace`, `sku`, `op`, `body`) to
+  get a single-use `live_token`, then `POST /v1/amazon/submit` with that `live_token`. A submit without the
+  token is a preview by design. **Smoke-test first:** upload ONE product (parent + one child), read back its
+  status via `GET /v1/amazon/listings/<sku>/issues` (a **404** there just means "not on Amazon yet" — not an
+  error), fix any real rejection, then ask before the full batch.
 - **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
   run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
   brand can reuse it:**
