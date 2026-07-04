@@ -437,9 +437,20 @@ def _patch_engine_amazon_api() -> bool:
 
 def _patch_payload_builder_validate() -> bool:
     """Patch ``core.amazon_payload_builder.AmazonPayloadBuilder.validate_payload`` so the
-    authoritative required-fields + enum check runs SERVER-SIDE against the LIVE schema
+    authoritative required-fields + enum check CAN run SERVER-SIDE against the LIVE schema
     (Task 10: ``POST /v1/{mp}/validate-payload``) instead of against the client's local
     ``valid_values`` copy (which Task 11 stops shipping).
+
+    OPT-IN (default OFF): the ONLY caller of ``validate_payload`` is the CP5 bulk build,
+    which validates EVERY payload (200+). Routing each one through the cloud is a per-item
+    round-trip storm that blows past the Bash 2-min ceiling (SIGTERM/exit 143) for no gain
+    while ``valid_values`` still ship in the served slice — local validation against that
+    slice is identical and instant, and it is what the engine's own CP6 rule mandates
+    ("local validation for ALL products = seconds; live sample only <=3 SKUs"). CP6's
+    authoritative server check goes through a DIFFERENT path (the SP-API preview via the
+    engine-API patch), not this method. So default to LOCAL; only redirect when
+    ``SKUBE_VALIDATE_REMOTE=1`` is explicitly set (the future state where value lists stop
+    shipping — which will also need a BATCH endpoint so the whole build stays fast).
 
     FAIL-SAFE (removed by Task 13): if the gateway is unreachable, the API key is unset,
     or the response is malformed, fall back to the ORIGINAL local validation — a server
@@ -458,6 +469,8 @@ def _patch_payload_builder_validate() -> bool:
 
     def _remote_validate(self, payload, mode):  # noqa: ANN001
         try:
+            if os.environ.get("SKUBE_VALIDATE_REMOTE", "").strip().lower() not in ("1", "true", "yes"):
+                return local_validate(self, payload, mode)  # default: fast local (bulk-build safe)
             if not _api_key():
                 return local_validate(self, payload, mode)
             mp = (os.environ.get("SKUBE_PLATFORM") or "amazon").strip().lower()
