@@ -28,7 +28,12 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
    attributes to change) — use the engine from `$SKUBE_ENGINE_DIR` with the gateway env (SKUBE_GATEWAY=true,
    the `_gateway_shim` on PYTHONPATH, key/url from `~/.skube/.env`).
 3. Validate via `{SKUBE_API_URL}/v1/amazon/validate` (op=patch); fix any issues.
-4. Submit via `{SKUBE_API_URL}/v1/amazon/submit` (op=patch) — only after the user confirms.
+4. Submit via `{SKUBE_API_URL}/v1/amazon/submit` (op=patch) — only after the user confirms. **A real write is
+   TWO steps** (same gated path as CP6, see `$SKUBE_ENGINE_DIR/.claude/agents/amazon-adapter/slices/CP6.md`):
+   first `POST /v1/amazon/live-intents` for a single-use `live_token`, then `/submit` WITH that token. Requires
+   the connection's `live_writes_enabled` (else 409 → tell the user to flip the Web-App Connections toggle).
+   A `/submit` without a token returns `mode: VALIDATION_PREVIEW` and changes nothing — that is NOT a backend
+   blocker, just a missing token; get one and retry. A real change returns `mode: LIVE`.
 
 Partial update (UPDATE_PARTIAL), never delete. Never handle Amazon credentials; runs server-side via Skube.
 

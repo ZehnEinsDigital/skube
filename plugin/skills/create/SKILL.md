@@ -80,8 +80,8 @@ The engine's brain and per-checkpoint instructions live in `$SKUBE_ENGINE_DIR/CL
 `$SKUBE_ENGINE_DIR/.claude/agents/`. Read them as you go and follow them, but **execute every step here**
 and **dispatch each checkpoint as its own sub-agent (Task)** — the engine's hard rule is *one checkpoint
 per agent call*. **Give each sub-agent the SMALLEST matching instruction set — a checkpoint SLICE when
-one exists** (`.claude/agents/amazon-adapter/slices/CP2.md` / `CP4.md` / `CP5.md`), falling back to the
-full SOP only when there is no slice (e.g. `.claude/agents/supplier-analyzer/SOP.md` for CP1). Never
+one exists** (`.claude/agents/amazon-adapter/slices/CP2.md` / `CP4.md` / `CP5.md` / `CP6.md`), falling back to
+the full SOP only when there is no slice (e.g. `.claude/agents/supplier-analyzer/SOP.md` for CP1). Never
 hand a sub-agent the full SOP+CONFIG+CLAUDE.md stack when a slice covers its checkpoint — that context
 bloat is what makes checkpoints slow. Always add: the run context, `injected_rules.md`, AND the resolved
 `$SKUBE_ENGINE_DIR` value (sub-agents don't inherit this session's env — pass it explicitly in the Task
@@ -193,41 +193,14 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   **Never fabricate** — no data and nothing safely derivable → leave it empty. Tell the user the coverage
   (X fields, Y filled, Z intentionally empty), not just the required count. **If GPSR data is missing, ask
   the user here** (responsible party, manufacturer contact) — never invent it.
-- **CP6 — Validate:** validate **all** products **locally first** (deterministic, seconds —
-  required/dropdown/length/parent-child/GPSR), then run a live VALIDATION_PREVIEW for **only a few sample
-  SKUs (≤3), never all** — the local check already covers everything; live-validating hundreds is slow and
-  risks throttling. If the cloud returns 503 / `amazon_throttled` (Amazon's auth endpoint is briefly
-  throttled — not your data), tell the user **once** ("local check passed X/0, live preview again in a few
-  minutes") and **stop** — don't retry in a loop. Show the result in plain language. A **live upload happens
-  ONLY after the user explicitly approves it.**
-  **Build-only mode (no connection): THIS is the moment to offer the connect** — the listings are built and
-  locally validated; say so, and that the live check + upload need their seller account once: point them to
-  the Skube web app's Connections page, and offer the alternative ("or I'll give you the finished listings
-  as a file" — in the user's language). Never block the earlier steps on this.
-  **🔴 UPLOAD PREFLIGHT — check that live uploads are UNLOCKED before you try (do NOT skip):** real writes
-  are OFF by default per connection (`live_writes_enabled`). BEFORE attempting any upload, read it from
-  `GET $SKUBE_API_URL/v1/me/marketplaces` → the pinned connection's `live_writes_enabled`. If it is **false**,
-  do NOT submit anything (a `/submit` without a live token is only a silent preview — it writes nothing and
-  returns no id; never mistake that for an upload). Say ONE accurate line in the user's language:
-  *"Live uploads are still off for this connection. Turn them on once in the Skube web app → Connections →
-  your account → the ‚Live uploads' switch, then say ‚go' and I'll upload."* — **never invent a different UI
-  path**; that switch is the real and only place.
-  **🔴 The real upload flow is TWO steps per SKU — a bare `/submit` is ALWAYS a preview (never a real write):**
-  1. `POST $SKUBE_API_URL/v1/amazon/live-intents` (body: `credential_id`, `marketplace`, `sku`, `op`, `body`)
-     → returns a single-use `live_token` for exactly this write.
-  2. `POST /v1/amazon/submit` with that **`live_token`** in the body (plus the same `credential_id`,
-     `marketplace`, `sku`, `op`, `body`).
-  The client can NEVER force a live write directly — the token is the only thing that turns a submit into a
-  real write. A submit WITHOUT a valid token returns `"mode": "VALIDATION_PREVIEW"` and writes nothing.
-  **🔴 SELF-CHECK after every real submit — read the response `mode`:** a real write returns `"mode": "LIVE"`.
-  If you intended a real upload and see `"mode": "VALIDATION_PREVIEW"`, that means **you didn't pass a valid
-  live_token** (you skipped `/live-intents`, or it expired / was already used) — it is **NEVER** a "backend
-  blocker" or a reason to contact support, and the account is NOT "in sandbox mode". Redo step 1 (fresh token)
-  and retry step 2. Only `409` responses ("live writes not enabled" / "authorization invalid") point at a
-  real precondition — handle those, don't invent a backend cause.
-  **Smoke-test first:** do the two-step upload for ONE product (parent + one child), confirm its response
-  `mode` is `LIVE`, then read back its status via `GET /v1/amazon/listings/<sku>/issues` (a **404** there just
-  means "not on Amazon yet" — not an error), fix any real rejection, then ask before the full batch.
+- **CP6 — Validate + upload:** follow the **cloud CP6 slice** (`.claude/agents/amazon-adapter/slices/CP6.md`
+  from `$SKUBE_ENGINE_DIR`, pulled at runtime — the operative mechanics live there, server-side, not in this
+  shell): local validation for ALL, live `VALIDATION_PREVIEW` sample ≤3, the `live_writes_enabled` upload
+  preflight, and the two-step `live-intents`→`submit` write flow with its `mode: LIVE` self-check. Cross-cutting
+  rules you enforce as the orchestrator: **a live upload happens ONLY after the user's explicit go** — the
+  security guard accepts that go ONLY directly from the user, never routed through you; and **build-only mode
+  (no connection): THIS is the moment to offer the connect** (or "I'll give you the finished listings as a file"
+  — in the user's language). Never block the earlier steps on the connection.
 - **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
   run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
   brand can reuse it:**
