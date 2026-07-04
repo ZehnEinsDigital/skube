@@ -109,24 +109,38 @@ def _shim_dir() -> str:
     return str(pathlib.Path(__file__).resolve().parent / "_gateway_shim")
 
 
-def _welcome_if_not_connected() -> None:
-    """First-run onboarding: if this device has no Skube connection yet (no SKUBE_API_KEY in
-    ~/.skube/.env), hand the model ONE line of context so it greets the user with the single
-    action that matters. Silent once connected. Never raises, never prints secrets."""
+def _session_onboarding_context() -> None:
+    """Onboarding context, one JSON object, two states. NOT connected: greet with the single
+    /skube:connect line. Connected: Start-Karte rule — on the FIRST Skube-related turn of a
+    session with no concrete task, show the start card (commands/start.md) instead of jumping
+    into a job. Never raises, never prints secrets."""
     try:
-        dotenv = _load_dotenv(pathlib.Path.home() / ".skube" / ".env")
-        if dotenv.get("SKUBE_API_KEY", "").strip():
-            return  # connected — stay silent
         import json
 
-        context = (
-            "Skube ist installiert, aber dieses Gerät ist noch nicht verbunden. "
-            "WENN der Nutzer etwas über Listings/Marktplätze/Skube sagt ODER die Session gerade "
-            "erst beginnt, begrüße ihn mit GENAU EINER freundlichen Zeile (Sprache des Nutzers, "
-            "Deutsch wenn unklar): '👋 Skube ist startklar. Tippe /skube:connect — öffnet kurz "
-            "deinen Browser, kein Schlüssel nötig. Danach sag einfach, was du listen willst.' "
-            "Keine technischen Details, keine weiteren Schritte, kein Jargon."
+        plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "").strip() or str(
+            pathlib.Path(__file__).resolve().parent.parent
         )
+        dotenv = _load_dotenv(pathlib.Path.home() / ".skube" / ".env")
+        if dotenv.get("SKUBE_API_KEY", "").strip():
+            context = (
+                "Skube ist verbunden. START-KARTE-Regel: Beim ERSTEN Skube-Bezug dieser Session "
+                "(Gruß, vage Frage, ‚was kannst du', Marktplatz/Listing erwähnt OHNE konkreten "
+                "Auftrag) zeige ZUERST die Skube-Start-Karte — Spezifikation in "
+                f"{plugin_root}/commands/start.md (Widget-Stufe wenn ein Inline-Widget-Tool da "
+                "ist, sonst die Markdown-Karte). Nennt der Nutzer bereits einen konkreten Auftrag "
+                "(z. B. Datei + ‚erstelle Listings', konkrete SKU-Frage), KEINE Karte vorschalten "
+                "— direkt ausführen. Automatisch höchstens EINMAL pro Session; auf /skube:start "
+                "immer."
+            )
+        else:
+            context = (
+                "Skube ist installiert, aber dieses Gerät ist noch nicht verbunden. "
+                "WENN der Nutzer etwas über Listings/Marktplätze/Skube sagt ODER die Session gerade "
+                "erst beginnt, begrüße ihn mit GENAU EINER freundlichen Zeile (Sprache des Nutzers, "
+                "Deutsch wenn unklar): '👋 Skube ist startklar. Tippe /skube:connect — öffnet kurz "
+                "deinen Browser, kein Schlüssel nötig. Danach sag einfach, was du listen willst.' "
+                "Keine technischen Details, keine weiteren Schritte, kein Jargon."
+            )
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "SessionStart",
@@ -156,7 +170,7 @@ def _reap_expired_best_effort() -> None:
 
 def main() -> None:
     _reap_expired_best_effort()
-    _welcome_if_not_connected()
+    _session_onboarding_context()
     env_file = os.environ.get("CLAUDE_ENV_FILE", "").strip()
     if not env_file:
         return  # nowhere to write session env — nothing to do

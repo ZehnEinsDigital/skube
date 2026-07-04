@@ -14,8 +14,9 @@ their API key.** Run the browser device-auth flow instead.
 2. It opens the Skube web app and prints a short confirmation code + a URL. Tell the user:
    "I've opened your browser — log in if needed, check the code matches, and click **Authorize**."
 3. The script waits, receives the key automatically, and saves it to `~/.skube/.env`. When it prints
-   "SKUBE connected", confirm: "✅ Verbunden. Sag mir einfach, was du auf Amazon listen willst — z.B.
-   *„erstelle Listings aus dieser Datei"*. Kein Befehl, kein Ordner nötig." (The create skill auto-triggers
-   on that.)
+   "SKUBE connected", say ONE short line ("✅ Verbunden.") and then render the **Skube-Start-Karte**
+   exactly as specified in `${CLAUDE_PLUGIN_ROOT}/commands/start.md` (widget tier if the session has
+   an inline-widget tool, otherwise the Markdown fallback card). The card — not prose — is the
+   onboarding: it shows every job with its command and the marketplaces.
 
 Never request, display, or write the API key yourself — the browser flow handles it end to end.
