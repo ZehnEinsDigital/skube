@@ -212,12 +212,22 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   *"Live uploads are still off for this connection. Turn them on once in the Skube web app → Connections →
   your account → the ‚Live uploads' switch, then say ‚go' and I'll upload."* — **never invent a different UI
   path**; that switch is the real and only place.
-  **The real upload flow (only when `live_writes_enabled` is true AND the user said go):** per SKU, first
-  `POST $SKUBE_API_URL/v1/amazon/live-intents` (body: `credential_id`, `marketplace`, `sku`, `op`, `body`) to
-  get a single-use `live_token`, then `POST /v1/amazon/submit` with that `live_token`. A submit without the
-  token is a preview by design. **Smoke-test first:** upload ONE product (parent + one child), read back its
-  status via `GET /v1/amazon/listings/<sku>/issues` (a **404** there just means "not on Amazon yet" — not an
-  error), fix any real rejection, then ask before the full batch.
+  **🔴 The real upload flow is TWO steps per SKU — a bare `/submit` is ALWAYS a preview (never a real write):**
+  1. `POST $SKUBE_API_URL/v1/amazon/live-intents` (body: `credential_id`, `marketplace`, `sku`, `op`, `body`)
+     → returns a single-use `live_token` for exactly this write.
+  2. `POST /v1/amazon/submit` with that **`live_token`** in the body (plus the same `credential_id`,
+     `marketplace`, `sku`, `op`, `body`).
+  The client can NEVER force a live write directly — the token is the only thing that turns a submit into a
+  real write. A submit WITHOUT a valid token returns `"mode": "VALIDATION_PREVIEW"` and writes nothing.
+  **🔴 SELF-CHECK after every real submit — read the response `mode`:** a real write returns `"mode": "LIVE"`.
+  If you intended a real upload and see `"mode": "VALIDATION_PREVIEW"`, that means **you didn't pass a valid
+  live_token** (you skipped `/live-intents`, or it expired / was already used) — it is **NEVER** a "backend
+  blocker" or a reason to contact support, and the account is NOT "in sandbox mode". Redo step 1 (fresh token)
+  and retry step 2. Only `409` responses ("live writes not enabled" / "authorization invalid") point at a
+  real precondition — handle those, don't invent a backend cause.
+  **Smoke-test first:** do the two-step upload for ONE product (parent + one child), confirm its response
+  `mode` is `LIVE`, then read back its status via `GET /v1/amazon/listings/<sku>/issues` (a **404** there just
+  means "not on Amazon yet" — not an error), fix any real rejection, then ask before the full batch.
 - **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
   run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
   brand can reuse it:**
