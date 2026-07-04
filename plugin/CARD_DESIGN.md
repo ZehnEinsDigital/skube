@@ -1,51 +1,51 @@
-# Skube-Karten-Design — EIN Look für ALLE Job-Ausgaben
+# Skube card design — ONE look for ALL job outputs
 
-Jede Ergebnis-Ausgabe an den User (status, diagnose, update, sales — und alles Künftige) ist eine
-**Skube-Karte** in genau diesem Design. Die Checkpoint-Karten des Create-Flows rendert
-`core/render_card.py` deterministisch — dieses Dokument ist der **Spiegel** desselben Designs für
-Karten, deren Inhalt der Agent selbst zusammenstellt. Ändert sich das Design, gilt: `render_card.py`
-ist die SSOT, diese Datei zieht nach.
+Every result output to the user (status, diagnose, update, sales — and everything future) is a
+**Skube card** in exactly this design. The create flow's checkpoint cards are rendered
+deterministically by `core/render_card.py` — this document is the **mirror** of the same design for
+cards whose content the agent assembles itself. If the design changes: `render_card.py`
+is the SSOT, this file follows.
 
-## Markenfarben (fest)
+## Brand colors (fixed)
 
-| Rolle | Farbe | Einsatz |
+| Role | Color | Use |
 |---|---|---|
-| Hauptfarbe | `#FF206E` (Magenta) | Kopf-Badge (Job/Schritt), primäre Aktions-Buttons |
-| Zweitfarbe | `#3D5AFE` (Cobalt) | Sektions-Punkt, sekundäre Buttons, Aufklapp-Buttons, Icons, Links |
-| Status | grün `#1a6b3c`/`#e3f2e8` · amber `#8a5a00`/`#fdf0d5` | NUR Zustand (fertig / braucht Antwort) — nie für Deko |
+| Primary color | `#FF206E` (magenta) | Header badge (job/step), primary action buttons |
+| Secondary color | `#3D5AFE` (cobalt) | Section dot, secondary buttons, fold-open buttons, icons, links |
+| Status | green `#1a6b3c`/`#e3f2e8` · amber `#8a5a00`/`#fdf0d5` | ONLY state (done / needs answer) — never for decoration |
 
-Regeln: Magenta = „das ist die Aktion / das ist Skube". Cobalt = „das ist klickbar/interaktiv".
-Status bleibt semantisch. Sonst Host-Variablen (`var(--text-primary)` usw.) — nie Hardcode-Grau.
+Rules: magenta = "this is the action / this is Skube". Cobalt = "this is clickable/interactive".
+Status stays semantic. Everything else host variables (`var(--text-primary)` etc.) — never hardcoded gray.
 
-## Widget-Stufe (Session hat ein Inline-Widget-Tool)
+## Widget tier (session has an inline-widget tool)
 
-Karte = `<div id="sk-card">` + `<script>` mit einer Datenstruktur `D` + dem Standard-JS unten.
-Der Agent baut NUR `D` — das Layout kommt aus dem JS, dadurch sieht jede Karte identisch aus.
+Card = `<div id="sk-card">` + `<script>` with a data structure `D` + the standard JS below.
+The agent builds ONLY `D` — the layout comes from the JS, so every card looks identical.
 
-**Empfohlener Weg — nicht abtippen:** `D` als JSON-Datei schreiben und deterministisch rendern:
-`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout ist der fertige Widget-Code
-(das Skript liest das Standard-JS unten aus dieser Datei; der Release-Build spiegelt es
-automatisch aus `render_card.py`). Das JS unten nur dann 1:1 übernehmen, wenn Python in der
-Session nicht verfügbar ist.
+**Recommended path — don't retype:** write `D` as a JSON file and render deterministically:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout is the finished widget code
+(the script reads the standard JS below from this file; the release build mirrors it
+automatically from `render_card.py`). Only copy the JS below 1:1 when Python is not
+available in the session.
 
 ```js
 D = {
-  head: { icon: "chart-bar", emoji: "📊", job: "Verkäufe", title: "Amazon DE · 30 Tage", status: "done" },
-        // icon = Tabler-Outline-Name (Magenta-Kachel); status: "done" | "ask";
-        // Create-Flow nutzt step:"1/7" statt job. emoji nur für den Markdown-Fallback.
-  chips: [ { v: "1.204", l: "Einheiten" }, { v: "89.312 €", l: "Umsatz" } ],   // Kennzahlen
-  _t: { step: "Step", ask: "⏸️ needs your answer", done: "✅ done" },  // Statuslabels — in Session-Sprache setzen; weglassen = Englisch
+  head: { icon: "chart-bar", emoji: "📊", job: "Sales", title: "Amazon DE · 30 days", status: "done" },
+        // icon = Tabler outline name (magenta tile); status: "done" | "ask";
+        // the create flow uses step:"1/7" instead of job. emoji only for the Markdown fallback.
+  chips: [ { v: "1,204", l: "Units" }, { v: "€89,312", l: "Revenue" } ],   // key figures
+  _t: { step: "Step", ask: "⏸️ needs your answer", done: "✅ done" },  // status labels — set in the session language; omit = English
   sections: [
-    { t: "table", title: "…", cols: ["Was","Ergebnis","Woher"], rows: [[…]] },
-    { t: "table", title: "Alle N … anzeigen", fold: true, cols: […], rows: [[…]] },  // Input-Echo/Longtail
-    { t: "tree",  title: "…", text: "Serie …\n ├─ …" },
-    { t: "buttons", title: "Zu klären", note: "…", items: [
-        { label: "…", prompt: "…", primary: true } ] }        // primary = Magenta, sonst Cobalt
+    { t: "table", title: "…", cols: ["What","Result","Source"], rows: [[…]] },
+    { t: "table", title: "Show all N …", fold: true, cols: […], rows: [[…]] },  // input echo/long tail
+    { t: "tree",  title: "…", text: "Series …\n ├─ …" },
+    { t: "buttons", title: "To clarify", note: "…", items: [
+        { label: "…", prompt: "…", primary: true } ] }        // primary = magenta, otherwise cobalt
   ]
 }
 ```
 
-Standard-JS (Spiegel von `render_card.py` — 1:1 übernehmen, nicht umbauen):
+Standard JS (mirror of `render_card.py` — copy 1:1, do not restructure):
 
 ```html
 <div id="sk-card" style="padding:0.5rem 0"></div>
@@ -75,37 +75,37 @@ host.innerHTML=h;
 </script>
 ```
 
-Nach dem Widget im Chat-Text nur EIN Satz + ggf. Weiter-Zeile — Karteninhalte NIE als Text doppeln.
+After the widget, the chat text is ONE sentence + a next-step line if needed — NEVER duplicate card contents as text.
 
-## Markdown-Fallback (kein Widget-Tool)
+## Markdown fallback (no widget tool)
 
-Dieselbe Karte als Markdown (Struktur identisch zur Checkpoint-Karte):
+The same card as Markdown (structure identical to the checkpoint card):
 
 ```markdown
-## <Emoji> <Job> — <✅ fertig | ⏸️ braucht deine Antwort>
+## <Emoji> <Job> — <✅ done | ⏸️ needs your answer>
 
-<EIN Klartext-Satz.>
+<ONE plain-language sentence.>
 
-| Was | Ergebnis | Woher |
+| What | Result | Source |
 |---|---|---|
-| … | <echter Wert> | <Quelle/Abfrage> |
+| … | <real value> | <source/query> |
 
-**Weiter:** „…" = <nächster Schritt>
+**Next:** "…" = <next step>
 ```
 
-## Sprache (English-first)
+## Language (English-first)
 
-Default ist Englisch. Schreibt der User in einer anderen Sprache, sind ALLE sichtbaren Texte
-der Karte (Titel, Sektions-Titel, Spaltenköpfe, Button-Labels, `_t`) konsequent in dieser
-Sprache — Struktur, Farben und Slash-Befehle bleiben identisch. Checkpoint-Karten:
-`render_card.py --lang en|de` eingebaut; jede andere Sprache über `--labels <file.json>`
-(die UI-Schlüssel aus `_STRINGS` einmal übersetzen und mitgeben).
+Default is English. If the user writes in another language, ALL visible texts of the
+card (title, section titles, column headers, button labels, `_t`) are consistently in that
+language — structure, colors and slash commands stay identical. Checkpoint cards:
+`render_card.py --lang en|de` built in; any other language via `--labels <file.json>`
+(translate the UI keys from `_STRINGS` once and pass them along).
 
-## Inhalts-Regeln (gelten für beide Stufen)
+## Content rules (apply to both tiers)
 
-- **Vollständigkeit:** Ergebnisse (Befunde, Gruppen, Positionen) IMMER alle ausschreiben — nie
-  „+ N weitere". Große ERGEBNIS-Mengen strukturieren (Zwischen-Headings/eigene Tabellen).
-- **Input-Echo ≠ Ergebnis:** was der User selbst geliefert hat (Roh-Spalten, Roh-Listen) gehört in
-  eine `fold: true`-Sektion — zugeklappt, per Button aufklappbar.
-- Jede Zahl mit Herkunft („Woher"). Keine ASCII-Boxen. Kein Roh-JSON im Chat.
-- Buttons senden wörtliche Slash-Befehle oder klare Sätze (`sendPrompt`) — der User muss nie raten.
+- **Completeness:** ALWAYS write out all results (findings, groups, items) — never
+  "+ N more". Structure large RESULT sets (sub-headings/own tables).
+- **Input echo ≠ result:** what the user supplied themselves (raw columns, raw lists) belongs in
+  a `fold: true` section — collapsed, expandable via button.
+- Every number with its origin ("Source"). No ASCII boxes. No raw JSON in the chat.
+- Buttons send literal slash commands or clear sentences (`sendPrompt`) — the user never has to guess.

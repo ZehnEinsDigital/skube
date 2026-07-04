@@ -3,31 +3,31 @@ description: Show the Skube start card — everything you can do, one click away
 argument-hint: ""
 ---
 
-Zeige die **Skube-Start-Karte** — das Cockpit des Kopiloten. Sie ist die SSOT für den Einstieg und
-erscheint (a) auf `/skube:start`, (b) direkt nach erfolgreichem `/skube:connect`, (c) beim ERSTEN
-Skube-Bezug einer neuen Session ohne konkreten Auftrag. Nennt der Nutzer bereits einen konkreten
-Auftrag (Datei + „erstelle Listings…"), wird die Karte NICHT vorgeschaltet — direkt ausführen.
-Maximal einmal pro Session automatisch zeigen; auf `/skube:start` immer.
+Show the **Skube start card** — the copilot's cockpit. It is the SSOT for getting started and
+appears (a) on `/skube:start`, (b) directly after a successful `/skube:connect`, (c) on the FIRST
+Skube-related mention in a new session without a concrete job. If the user already names a concrete
+job (file + "create listings…"), the card is NOT put in front — execute directly.
+Show automatically at most once per session; on `/skube:start` always.
 
-**SPRACHE:** English-first — die Karte unten ist das englische Original (Default). Ist die
-Session-Sprache eine andere (User schreibt z. B. Deutsch), übersetze NUR die sichtbaren Texte
-in diese Sprache — Layout, Farben, Icons und die Slash-Befehle bleiben exakt gleich.
+**LANGUAGE:** English-first — the card below is the English original (default). If the
+session language is a different one (user writes e.g. German), translate ONLY the visible texts
+into that language — layout, colors, icons and the slash commands stay exactly the same.
 
-## Zustand bestimmen (still, ohne Kommentar)
+## Determine state (silently, without commentary)
 
-- **Verbunden?** `~/.skube/.env` enthält `SKUBE_API_KEY` → Chip „Verbunden" (grün). Sonst Chip
-  „Noch nicht verbunden" (amber) UND als oberste Aktion eine Verbinden-Kachel
-  (Button sendet `/skube:connect`).
-- **Marktplätze:** Standard: Amazon DE aktiv, alle 13 anderen gesperrt. Wenn verbunden und die
-  Antwort von `GET $SKUBE_API_URL/v1/me` schnell verfügbar ist (2s-Timeout, sonst Standard nehmen),
-  die tatsächlich freigeschalteten Marktplätze mit Haken markieren.
-- KEINE weiteren Abfragen, KEIN Engine-Provisioning für die Karte — sie muss in Sekunden stehen.
+- **Connected?** `~/.skube/.env` contains `SKUBE_API_KEY` → chip "Connected" (green). Otherwise chip
+  "Not connected yet" (amber) AND, as the topmost action, a connect tile
+  (button sends `/skube:connect`).
+- **Marketplaces:** default: Amazon DE active, all 13 others locked. If connected and the
+  response from `GET $SKUBE_API_URL/v1/me` is available quickly (2s timeout, otherwise use the default),
+  mark the actually unlocked marketplaces with check marks.
+- NO further queries, NO engine provisioning for the card — it must be up in seconds.
 
-## Stufe 1 — Widget (wenn die Session ein Inline-Widget-Tool hat, z. B. `show_widget`)
+## Tier 1 — Widget (if the session has an inline-widget tool, e.g. `show_widget`)
 
-Genau dieses HTML rendern (Status-Chip und Marktplatz-Haken an den Zustand anpassen, sonst nichts
-ändern — Layout ist fix, damit jede Karte identisch aussieht). Die Buttons senden die
-Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richtige Skill startet:
+Render exactly this HTML (adapt the status chip and marketplace check marks to the state, change
+nothing else — the layout is fixed so every card looks identical). The buttons send the
+slash commands as a chat message (`sendPrompt`), so the right skill starts deterministically:
 
 ```html
 <div style="padding:0.5rem 0;">
@@ -110,7 +110,7 @@ browser briefly, no key to paste" with `<button onclick="sendPrompt('/skube:conn
 After the widget, the chat text is ONE short line ("Where do we start?" — session language) —
 never repeat the card contents as text.
 
-## Stufe 2 — Markdown-Fallback (kein Widget-Tool in der Session)
+## Tier 2 — Markdown fallback (no widget tool in the session)
 
 ```markdown
 ## 🧊 skube — your marketplace copilot — ✅ connected
@@ -133,8 +133,8 @@ What would you like to do? Type the command — or just say it in your own words
 (Not connected: heading "— ⏸️ not connected yet", first table row
 "🔌 Connect | once, via browser | `/skube:connect`".)
 
-## Verbote
+## Forbidden
 
-Keine ASCII-Boxen · keine 7-Schritte-Erklärung auf dieser Karte (die gehört in den Create-Flow) ·
-Marktplätze IMMER alle 14 ausschreiben (nie „u. a.") · Karte nie mitten in einen laufenden
-Auftrag schieben.
+No ASCII boxes · no 7-step explanation on this card (that belongs in the create flow) ·
+ALWAYS write out all 14 marketplaces (never "among others") · never push the card into the middle
+of a running job.

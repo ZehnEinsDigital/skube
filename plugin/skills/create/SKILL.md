@@ -35,16 +35,16 @@ anything else:
     Categories, product types, allowed variation themes, schemas and validation are all served from
     Skube's cloud catalog — the whole build (CP0–CP6 local part) works without a seller account. Pick the
     marketplace from what the user said (default Amazon, country DE), pin **no** `credential_id`, and say
-    one friendly line like: *"Dein Amazon-Konto brauchst du erst ganz am Ende fürs Hochladen — ich bau die
-    Listings jetzt schon komplett."* Only the live check (CP6 preview) and the upload (CP7) need the
-    connection; offer it THERE, not now.
+    one friendly line (in the user's language) like: *"You'll only need your Amazon account at the very end
+    for the upload — I'm building the listings in full right now."* Only the live check (CP6 preview) and
+    the upload (CP7) need the connection; offer it THERE, not now.
   - User named a marketplace AND it has exactly ONE connection → use it (confirm in one short line).
   - A marketplace has **several connections** — an agency can hold one account **per client** (e.g.
     "Amazon — Client A / Client B / Client C"). You **MUST ask which connection**, by its label.
     **NEVER guess.** A product must never land in another client's account.
   - User didn't say which → show the **connected** ones (each connection by label) as the choices, and list
-    the **locked** ones greyed-out as a gentle upsell ("Otto, eBay … schaltest du frei, wenn du mehr
-    Accounts buchst").
+    the **locked** ones greyed-out as a gentle upsell ("Otto, eBay … you unlock these when you book more
+    accounts" — in the user's language).
 - Remember the chosen connection's `marketplace` (platform), `credential_id`, label and country (default
   `DE`). **Pin it for the whole run.** If the user picks a marketplace whose `live` flag is false, say it's
   connectable but its run isn't switched on yet, and offer a live one (Amazon).
@@ -96,11 +96,11 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   visible, clearly-named run folder** in the user's CURRENT project folder — `$CLAUDE_PROJECT_DIR` (fall
   back to the cwd): `<project>/skube-run/<brand-slug>/` with an `input/` subfolder. Do NOT create anything
   in `~/Documents`, `~/Downloads`, `~/Desktop`, or the hidden `~/.skube`. Then give the user **ONE
-  dead-clear handover line** and stop for the file — never the vague "schick mir die Datei". Example
-  (German if they write German):
-  > Alles klar, für **<Marke>** leg ich los. 📁 Ordner angelegt: `skube-run/<marke>/`.
-  > **Zieh deine Produktdatei (Excel/CSV) einfach hier in den Chat — oder leg sie in den Ordner.**
-  > Dann analysiere ich sie sofort. *(Noch keine Datei? Beschreib mir ein Produkt, ich bau dir ein Beispiel-Listing.)*
+  dead-clear handover line** and stop for the file — never the vague "send me the file". Example
+  (in the user's language):
+  > All right, I'm getting started on **<brand>**. 📁 Folder created: `skube-run/<brand>/`.
+  > **Just drag your product file (Excel/CSV) into this chat — or drop it into the folder.**
+  > Then I'll analyze it right away. *(No file yet? Describe a product and I'll build you a sample listing.)*
 
   **Accept the file BOTH ways** so the user never thinks about paths: (a) if they **drag/attach a file into
   the chat or name a path**, COPY it into `<project>/skube-run/<brand-slug>/input/` yourself, then proceed;
@@ -151,9 +151,9 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
 - **CP1 — Analyze feed:** produce the column mapping + a short plain-language overview (products, fields).
   **SKU-cap pre-check (right after the product count is known, BEFORE CP2):** silently
   `curl -s -H "Authorization: Bearer $SKUBE_API_KEY" "$SKUBE_API_URL/v1/usage/skus"` — if `limit` is
-  not null and the feed's product count exceeds `remaining`, tell the user NOW in plain words (e.g.
-  *"Dein Free-Plan umfasst 10 Listings pro Monat — diese Datei hat 234. Ich kann die ersten N bauen,
-  oder du schaltest mit Pro unbegrenzt frei."*) and let them decide before any heavy work. Errors on
+  not null and the feed's product count exceeds `remaining`, tell the user NOW in plain words (in the
+  user's language, e.g. *"Your Free plan includes 10 listings per month — this file has 234. I can build
+  the first N, or you can unlock unlimited with Pro."*) and let them decide before any heavy work. Errors on
   this check → continue silently (the server enforces the cap at the end anyway).
   Work out the variant structure **internally** (discover all axes incl. **hidden** ones only in the title,
   collision-check to **0 duplicates**, derive parent/child) but in CP1 only **hint** at it — the detailed,
@@ -202,8 +202,8 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   ONLY after the user explicitly approves it.**
   **Build-only mode (no connection): THIS is the moment to offer the connect** — the listings are built and
   locally validated; say so, and that the live check + upload need their seller account once: point them to
-  the Skube web app's Connections page, and offer the alternative ("oder ich geb dir die fertigen Listings
-  als Datei"). Never block the earlier steps on this.
+  the Skube web app's Connections page, and offer the alternative ("or I'll give you the finished listings
+  as a file" — in the user's language). Never block the earlier steps on this.
 - **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
   run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
   brand can reuse it:**
@@ -229,12 +229,12 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   Best-effort: if reporting fails, don't block the user — the listings are already created.
   **Free tier note:** `/v1/runs*` requires the run-memory capability — a Free account gets 403 on
   ALL run-memory calls (recall AND reporting). Handle that as "skip silently + one gentle line"
-  (*"Mit Pro merkt sich Skube deine Läufe — der nächste dauert dann Minuten statt einer halben
-  Stunde."*) — never as an error, never blocking.
+  (*"With Pro, Skube remembers your runs — the next one then takes minutes instead of half an
+  hour."* — in the user's language) — never as an error, never blocking.
 
 ## Rules
 - One checkpoint, then wait for the user. Surface every question/result in plain language in THIS chat.
-- **Every checkpoint result is a CHECKPOINT-KARTE** (engine `core/checkpoint_template.md`) — and it is
+- **Every checkpoint result is a CHECKPOINT CARD** (engine `core/checkpoint_template.md`) — and it is
   NEVER truncated: every group/field/finding written out; big result sets get structure (one heading +
   table per group), not cuts.
   **Widget tier (preferred):** if THIS session has an inline-widget tool (e.g. `show_widget` from a
@@ -244,13 +244,13 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   `de` built in; any OTHER language: translate the UI keys from `core/render_card.py` `_STRINGS`
   once into a small JSON and pass `--labels <file.json>`). ALL other user-facing text (sentences,
   questions, the closing next-step line, markdown cards) follows the session language too.
-  The chat text then stays SHORT: one plain sentence + the open questions + the `**Weiter:**` line
+  The chat text then stays SHORT: one plain sentence + the open questions + the `**Next:**` line
   (the full tables live in the widget; never duplicate them as text). Optionally write a small
   questions JSON (`[{"q","options":[{"label","prompt","primary"}]}]`) so decisions become clickable
   buttons. **No widget tool → full Markdown card** per the template: heading
-  `## <Emoji> Schritt n/7 · <Name> — <Status>`, ONE plain sentence, `Was | Ergebnis | Woher` GFM
+  `## <Emoji> Step n/7 · <Name> — <Status>`, ONE plain sentence, `What | Result | Source` GFM
   tables, ```text blocks for trees (as many as the data needs), numbered questions with a bold
-  recommendation, closing `**Weiter:**` line. NEVER ASCII boxes.
+  recommendation, closing `**Next:**` line. NEVER ASCII boxes.
   **Design:** all cards share ONE look (brand: magenta #FF206E = header badge + primary action,
   cobalt #3D5AFE = interactive/section marks) — render_card.py emits it; any NON-checkpoint output
   (e.g. SKU-meter report) follows `${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`.

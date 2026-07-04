@@ -28,16 +28,16 @@ clear "yes".
 These are REAL Amazon sales (not Baselinker), PII-free, read-only. Never handle Amazon credentials; the call
 runs server-side via Skube.
 
-## Ausgabe-Design (PFLICHT)
+## Output design (MANDATORY)
 
-Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** (`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`).
-**Widget-Stufe (Session hat ein Inline-Widget-Tool): NICHT selbst layouten.** Baue NUR die
-Datenstruktur `D` (Schema in CARD_DESIGN.md; hier: `head.job = "Verkäufe"`, `head.icon = "chart-bar"`),
-schreibe sie als JSON-Datei und rendere deterministisch:
-`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout ist der fertige Widget-Code.
-Chat-Text danach: EIN Satz + Weiter-Zeile — Karteninhalte nie doppeln. Ohne Widget-Tool: die
-Markdown-Karte aus CARD_DESIGN.md. Ergebnisse vollständig, Input-Echo/Longtail zugeklappt
-(`fold: true`), jede Zahl mit Woher.
-SPRACHE: English-first — Default Englisch; schreibt der User in einer anderen Sprache, ist ALLES
-Nutzer-Sichtbare (Karteninhalte, `D._t`-Statuslabels, Buttons, Weiter-Zeile) konsequent in dieser
-Sprache. `D._t = {"step", "ask", "done"}` in der Session-Sprache setzen (weglassen = Englisch).
+Every result output to the user is a **Skube card** (`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`).
+**Widget tier (session has an inline-widget tool): do NOT lay it out yourself.** Build ONLY the
+data structure `D` (schema in CARD_DESIGN.md; here: `head.job = "Sales"`, `head.icon = "chart-bar"`),
+write it as a JSON file and render deterministically:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout is the finished widget code.
+Chat text afterwards: ONE sentence + next-step line — never duplicate card contents. Without a
+widget tool: the Markdown card from CARD_DESIGN.md. Results in full, input echo/long tail collapsed
+(`fold: true`), every number with its source.
+LANGUAGE: English-first — default English; if the user writes in another language, EVERYTHING
+user-visible (card contents, `D._t` status labels, buttons, next-step line) is consistently in that
+language. Set `D._t = {"step", "ask", "done"}` in the session language (omit = English).
