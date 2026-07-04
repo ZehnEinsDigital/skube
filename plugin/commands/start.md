@@ -9,6 +9,10 @@ Skube-Bezug einer neuen Session ohne konkreten Auftrag. Nennt der Nutzer bereits
 Auftrag (Datei + „erstelle Listings…"), wird die Karte NICHT vorgeschaltet — direkt ausführen.
 Maximal einmal pro Session automatisch zeigen; auf `/skube:start` immer.
 
+**SPRACHE:** English-first — die Karte unten ist das englische Original (Default). Ist die
+Session-Sprache eine andere (User schreibt z. B. Deutsch), übersetze NUR die sichtbaren Texte
+in diese Sprache — Layout, Farben, Icons und die Slash-Befehle bleiben exakt gleich.
+
 ## Zustand bestimmen (still, ohne Kommentar)
 
 - **Verbunden?** `~/.skube/.env` enthält `SKUBE_API_KEY` → Chip „Verbunden" (grün). Sonst Chip
@@ -32,47 +36,47 @@ Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richt
       <i class="ti ti-cube" style="font-size:22px; color:#fff;" aria-hidden="true"></i>
     </div>
     <div style="flex:1;">
-      <div style="font-size:18px; font-weight:500; color:var(--text-primary);">skube — dein Marktplatz-Kopilot</div>
-      <div style="font-size:13px; color:var(--text-secondary);">Was möchtest du tun? Klick eine Aktion — oder sag es einfach in eigenen Worten.</div>
+      <div style="font-size:18px; font-weight:500; color:var(--text-primary);">skube — your marketplace copilot</div>
+      <div style="font-size:13px; color:var(--text-secondary);">What would you like to do? Click an action — or just say it in your own words.</div>
     </div>
-    <span style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; background:var(--bg-success); color:var(--text-success); border-radius:999px; padding:4px 12px;"><i class="ti ti-check" style="font-size:14px;" aria-hidden="true"></i>Verbunden</span>
+    <span style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; background:var(--bg-success); color:var(--text-success); border-radius:999px; padding:4px 12px;"><i class="ti ti-check" style="font-size:14px;" aria-hidden="true"></i>Connected</span>
   </div>
 
   <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin:14px 0 16px;">
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-packages" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listings erstellen</span></div>
-      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Aus deiner Produktdatei (Excel/CSV) fertige Listings bauen — Amazon-Konto erst zum Hochladen nötig.</div>
-      <button onclick="sendPrompt('/skube:create')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Listings erstellen ↗</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-packages" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Create listings</span></div>
+      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Build ready-to-publish listings from your product file (Excel/CSV) — Amazon account only needed for the upload.</div>
+      <button onclick="sendPrompt('/skube:create')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Create listings ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:create</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-list-check" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Status prüfen</span></div>
-      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Was ist live, was hängt, was fehlt?</div>
-      <button onclick="sendPrompt('/skube:status')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Status zeigen ↗</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-list-check" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Check status</span></div>
+      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">What's live, what's stuck, what's missing?</div>
+      <button onclick="sendPrompt('/skube:status')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Show status ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:status</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-stethoscope" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Problem finden</span></div>
-      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Listing abgelehnt oder unsichtbar? Grund finden und beheben.</div>
-      <button onclick="sendPrompt('/skube:diagnose')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Grund finden ↗</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-stethoscope" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Find the problem</span></div>
+      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Listing rejected or not visible? Find the cause — and fix it.</div>
+      <button onclick="sendPrompt('/skube:diagnose')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Find the cause ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:diagnose</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-edit" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Listing ändern</span></div>
-      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Titel, Bullets, Beschreibung oder Attribute anpassen — ohne Neuaufbau.</div>
-      <button onclick="sendPrompt('/skube:update')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Listing ändern ↗</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-edit" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Update a listing</span></div>
+      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Change title, bullets, description or attributes — without rebuilding.</div>
+      <button onclick="sendPrompt('/skube:update')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Update listing ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:update</div>
     </div>
     <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:0.9rem 1.1rem;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-chart-bar" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">Verkäufe sehen</span></div>
-      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Einheiten, Umsatz und Conversion — direkt von Amazon.</div>
-      <button onclick="sendPrompt('/skube:sales')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Verkäufe zeigen ↗</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;"><i class="ti ti-chart-bar" style="font-size:18px; color:#3D5AFE;" aria-hidden="true"></i><span style="font-size:14px; font-weight:500; color:var(--text-primary);">See sales</span></div>
+      <div style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">Units, revenue and conversion — straight from Amazon.</div>
+      <button onclick="sendPrompt('/skube:sales')" style="font-size:13px; color:#FF206E; border:1px solid rgba(255,32,110,.5);">Show sales ↗</button>
       <div style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-muted); margin-top:6px;">/skube:sales</div>
     </div>
   </div>
 
   <div style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">Deine Marktplätze</div>
+    <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">Your marketplaces</div>
     <div style="display:flex; flex-wrap:wrap; gap:6px;">
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; background:var(--bg-success); color:var(--text-success); border-radius:999px; padding:3px 10px;"><i class="ti ti-check" style="font-size:13px;" aria-hidden="true"></i>Amazon DE</span>
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>Otto Market</span>
@@ -88,46 +92,46 @@ Slash-Befehle als Chat-Nachricht (`sendPrompt`), damit deterministisch der richt
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>Decathlon</span>
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>Voelkner</span>
       <span style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-muted); border:0.5px solid var(--border); border-radius:999px; padding:3px 10px;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i>AboutYou</span>
-      <button onclick="sendPrompt('Was bekomme ich mit Skube Pro?')" style="font-size:12.5px; padding:3px 12px; border-radius:999px; color:#3D5AFE; border:1px solid rgba(61,90,254,.35);">Mit Pro freischalten ↗</button>
+      <button onclick="sendPrompt('What do I get with Skube Pro?')" style="font-size:12.5px; padding:3px 12px; border-radius:999px; color:#3D5AFE; border:1px solid rgba(61,90,254,.35);">Unlock with Pro ↗</button>
     </div>
   </div>
 
   <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted);">
     <i class="ti ti-message" style="font-size:16px;" aria-hidden="true"></i>
-    <span>Du kannst auch einfach fragen — zum Beispiel <a href="#" onclick="event.preventDefault(); sendPrompt('Welche Amazon-Kategorie passt für Boxspringbetten?')" style="color:#3D5AFE;">„Welche Kategorie passt für Boxspringbetten?"</a> · Diese Karte: /skube:start</span>
+    <span>You can also just ask — for example <a href="#" onclick="event.preventDefault(); sendPrompt('Which Amazon category fits box spring beds?')" style="color:#3D5AFE;">"Which category fits box spring beds?"</a> · This card: /skube:start</span>
   </div>
 </div>
 ```
 
-Nicht-verbunden-Variante: Status-Chip → `background:var(--bg-warning); color:var(--text-warning)`
-mit Text „Noch nicht verbunden", und VOR dem Aktions-Grid eine Kachel „Einmal kurz verbinden —
-öffnet deinen Browser, kein Schlüssel nötig" mit `<button onclick="sendPrompt('/skube:connect')">Verbinden ↗</button>`.
+Not-connected variant: status chip → `background:var(--bg-warning); color:var(--text-warning)`
+with text "Not connected yet", and BEFORE the action grid one tile "Connect once — opens your
+browser briefly, no key to paste" with `<button onclick="sendPrompt('/skube:connect')">Connect ↗</button>`.
 
-Nach dem Widget im Chat-Text NUR eine Kurzzeile („Womit starten wir?") — die Inhalte NICHT als
-Text wiederholen.
+After the widget, the chat text is ONE short line ("Where do we start?" — session language) —
+never repeat the card contents as text.
 
 ## Stufe 2 — Markdown-Fallback (kein Widget-Tool in der Session)
 
 ```markdown
-## 🧊 skube — dein Marktplatz-Kopilot — ✅ verbunden
+## 🧊 skube — your marketplace copilot — ✅ connected
 
-Was möchtest du tun? Tippe den Befehl — oder sag es einfach in eigenen Worten.
+What would you like to do? Type the command — or just say it in your own words.
 
-| Job | Sag einfach … | Befehl |
+| Job | Just say … | Command |
 |---|---|---|
-| 📦 Listings erstellen | „erstelle Listings aus meiner Datei" | `/skube:create` |
-| ✅ Status prüfen | „was ist mit meinen Listings los?" | `/skube:status` |
-| 🩺 Problem finden | „warum ist mein Listing nicht sichtbar?" | `/skube:diagnose` |
-| ✏️ Listing ändern | „ändere den Titel von SKU …" | `/skube:update` |
-| 📈 Verkäufe sehen | „zeig meine Verkäufe der letzten 30 Tage" | `/skube:sales` |
+| 📦 Create listings | "create listings from my file" | `/skube:create` |
+| ✅ Check status | "what's going on with my listings?" | `/skube:status` |
+| 🩺 Find the problem | "why isn't my listing visible?" | `/skube:diagnose` |
+| ✏️ Update a listing | "change the title of SKU …" | `/skube:update` |
+| 📈 See sales | "show my sales for the last 30 days" | `/skube:sales` |
 
-**Marktplätze:** ✅ Amazon DE · 🔒 Otto Market, eBay, Kaufland, MediaMarktSaturn, Metro Markets, ManoMano, OnBuy, Leroy Merlin, FNAC, Cdiscount, Decathlon, Voelkner, AboutYou — freischalten mit Pro
+**Marketplaces:** ✅ Amazon DE · 🔒 Otto Market, eBay, Kaufland, MediaMarktSaturn, Metro Markets, ManoMano, OnBuy, Leroy Merlin, FNAC, Cdiscount, Decathlon, Voelkner, AboutYou — unlock with Pro
 
-**Weiter:** Produktdatei in den Chat ziehen = loslegen · `/skube:start` zeigt diese Karte jederzeit
+**Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime
 ```
 
-(Nicht verbunden: Kopfzeile „— ⏸️ noch nicht verbunden", erste Tabellenzeile
-„🔌 Verbinden | einmalig, per Browser | `/skube:connect`".)
+(Not connected: heading "— ⏸️ not connected yet", first table row
+"🔌 Connect | once, via browser | `/skube:connect`".)
 
 ## Verbote
 

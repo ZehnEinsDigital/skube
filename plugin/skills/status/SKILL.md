@@ -32,3 +32,6 @@ schreibe sie als JSON-Datei und rendere deterministisch:
 Chat-Text danach: EIN Satz + Weiter-Zeile — Karteninhalte nie doppeln. Ohne Widget-Tool: die
 Markdown-Karte aus CARD_DESIGN.md. Ergebnisse vollständig, Input-Echo/Longtail zugeklappt
 (`fold: true`), jede Zahl mit Woher.
+SPRACHE: English-first — Default Englisch; schreibt der User in einer anderen Sprache, ist ALLES
+Nutzer-Sichtbare (Karteninhalte, `D._t`-Statuslabels, Buttons, Weiter-Zeile) konsequent in dieser
+Sprache. `D._t = {"step", "ask", "done"}` in der Session-Sprache setzen (weglassen = Englisch).

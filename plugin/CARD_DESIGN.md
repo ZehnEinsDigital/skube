@@ -34,6 +34,7 @@ D = {
         // icon = Tabler-Outline-Name (Magenta-Kachel); status: "done" | "ask";
         // Create-Flow nutzt step:"1/7" statt job. emoji nur für den Markdown-Fallback.
   chips: [ { v: "1.204", l: "Einheiten" }, { v: "89.312 €", l: "Umsatz" } ],   // Kennzahlen
+  _t: { step: "Step", ask: "⏸️ needs your answer", done: "✅ done" },  // Statuslabels — in Session-Sprache setzen; weglassen = Englisch
   sections: [
     { t: "table", title: "…", cols: ["Was","Ergebnis","Woher"], rows: [[…]] },
     { t: "table", title: "Alle N … anzeigen", fold: true, cols: […], rows: [[…]] },  // Input-Echo/Longtail
@@ -65,8 +66,9 @@ window.skFold=(i,btn)=>{const d=document.getElementById('skf'+i);const open=d.st
 function tree(s){return card(sec(s.title)+`<pre style="font-size:12.5px;line-height:1.55;background:${SF};border-radius:10px;padding:12px 14px;overflow-x:auto;margin:4px 0">${E(s.text)}</pre>`)}
 function sec(t){return t?`<div style="font-size:15px;font-weight:500;color:var(--text-primary);margin:0 0 8px 0"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${B2};margin-right:8px;vertical-align:1px"></span>${E(t)}</div>`:''}
 function buttons(s){return card(`<div style="font-size:15px;font-weight:500;color:var(--text-primary);margin-bottom:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${B1};margin-right:8px;vertical-align:1px"></span>${E(s.title)}</div>${s.note?`<div style="font-size:13.5px;color:var(--text-secondary);margin-bottom:10px">${E(s.note)}</div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap">`+s.items.map(b=>`<button onclick="sendPrompt(${JSON.stringify(b.prompt)})" style="font-family:inherit;font-size:13.5px;border:1px solid ${b.primary?'rgba(255,32,110,.5)':'rgba(61,90,254,.35)'};color:${b.primary?B1:B2};background:transparent;border-radius:8px;padding:6px 14px;cursor:pointer">${E(b.label)}</button>`).join('')+`</div>`)}
-const stat=D.head.status==='ask'?['⏸️ braucht deine Antwort','#8a5a00','#fdf0d5']:['✅ fertig','#1a6b3c','#e3f2e8'];
-let h=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="width:40px;height:40px;border-radius:10px;background:${B1};display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-${D.head.icon||'cube'}" style="font-size:22px;color:#fff" aria-hidden="true"></i></div><div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:500;color:var(--text-primary)">${E(D.head.title)}</div><div style="font-size:12.5px;color:var(--text-secondary)">${E(D.head.step?'Schritt '+D.head.step:D.head.job||'skube')}</div></div><span style="font-size:13px;color:${stat[1]};background:${stat[2]};border-radius:999px;padding:3px 12px;flex:none">${stat[0]}</span></div>`;
+const T=Object.assign({step:'Step',ask:'⏸️ needs your answer',done:'✅ done'},D._t||{});
+const stat=D.head.status==='ask'?[T.ask,'#8a5a00','#fdf0d5']:[T.done,'#1a6b3c','#e3f2e8'];
+let h=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="width:40px;height:40px;border-radius:10px;background:${B1};display:flex;align-items:center;justify-content:center;flex:none"><i class="ti ti-${D.head.icon||'cube'}" style="font-size:22px;color:#fff" aria-hidden="true"></i></div><div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:500;color:var(--text-primary)">${E(D.head.title)}</div><div style="font-size:12.5px;color:var(--text-secondary)">${E(D.head.step?T.step+' '+D.head.step:D.head.job||'skube')}</div></div><span style="font-size:13px;color:${stat[1]};background:${stat[2]};border-radius:999px;padding:3px 12px;flex:none">${E(stat[0])}</span></div>`;
 if(D.chips)h+=chips(D.chips);
 (D.sections||[]).forEach((s,i)=>{if(s.t==='table')h+=table(s,i);else if(s.t==='tree')h+=tree(s);else if(s.t==='buttons')h+=buttons(s);});
 host.innerHTML=h;
@@ -90,6 +92,14 @@ Dieselbe Karte als Markdown (Struktur identisch zur Checkpoint-Karte):
 
 **Weiter:** „…" = <nächster Schritt>
 ```
+
+## Sprache (English-first)
+
+Default ist Englisch. Schreibt der User in einer anderen Sprache, sind ALLE sichtbaren Texte
+der Karte (Titel, Sektions-Titel, Spaltenköpfe, Button-Labels, `_t`) konsequent in dieser
+Sprache — Struktur, Farben und Slash-Befehle bleiben identisch. Checkpoint-Karten:
+`render_card.py --lang en|de` eingebaut; jede andere Sprache über `--labels <file.json>`
+(die UI-Schlüssel aus `_STRINGS` einmal übersetzen und mitgeben).
 
 ## Inhalts-Regeln (gelten für beide Stufen)
 

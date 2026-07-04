@@ -17,8 +17,9 @@ user first** — name the service and exactly what you'd pull — and use it onl
 silently read from or write to a non-Skube service.** Default when data is missing: ask the user for it.
 
 ## 0. Silent setup — do NOT narrate any of this
-- Read `~/.skube/.env`. If it has no `SKUBE_API_KEY`: say *"Verbinde dich einmal kurz mit Skube:"* and
-  tell them to run `/skube:connect`, then stop. (Connect is the ONLY slash command a user ever needs.)
+- Read `~/.skube/.env`. If it has no `SKUBE_API_KEY`: say *"Connect to Skube once:"* (in the user's
+  language) and tell them to run `/skube:connect`, then stop. (Connect is the ONLY slash command a
+  user ever needs.)
 - Engine + brain are provisioned AFTER the connection pick (step 0b) — so the brain/cache are fetched for
   the marketplace the user chose, not hardcoded Amazon.
 
@@ -238,7 +239,11 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   table per group), not cuts.
   **Widget tier (preferred):** if THIS session has an inline-widget tool (e.g. `show_widget` from a
   visualize MCP), render the card deterministically — `python3 core/render_card.py <cp0..cp7>
-  "<run_dir>" [--questions <file.json>]` (gateway env) — and pass its stdout as the widget code.
+  "<run_dir>" [--questions <file.json>] [--lang <ISO code>]` (gateway env) — and pass its stdout
+  as the widget code. LANGUAGE: English-first — pass the session language (`--lang en` default,
+  `de` built in; any OTHER language: translate the UI keys from `core/render_card.py` `_STRINGS`
+  once into a small JSON and pass `--labels <file.json>`). ALL other user-facing text (sentences,
+  questions, the closing next-step line, markdown cards) follows the session language too.
   The chat text then stays SHORT: one plain sentence + the open questions + the `**Weiter:**` line
   (the full tables live in the widget; never duplicate them as text). Optionally write a small
   questions JSON (`[{"q","options":[{"label","prompt","primary"}]}]`) so decisions become clickable

@@ -120,26 +120,31 @@ def _session_onboarding_context() -> None:
         plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "").strip() or str(
             pathlib.Path(__file__).resolve().parent.parent
         )
+        lang_rule = (
+            "LANGUAGE: Skube is English-first — default to English. The moment the user writes "
+            "in another language, EVERYTHING user-facing (cards, card labels, questions, buttons, "
+            "next-step lines) switches to that language and stays there for the whole session. "
+        )
         dotenv = _load_dotenv(pathlib.Path.home() / ".skube" / ".env")
         if dotenv.get("SKUBE_API_KEY", "").strip():
-            context = (
-                "Skube ist verbunden. START-KARTE-Regel: Beim ERSTEN Skube-Bezug dieser Session "
-                "(Gruß, vage Frage, ‚was kannst du', Marktplatz/Listing erwähnt OHNE konkreten "
-                "Auftrag) zeige ZUERST die Skube-Start-Karte — Spezifikation in "
-                f"{plugin_root}/commands/start.md (Widget-Stufe wenn ein Inline-Widget-Tool da "
-                "ist, sonst die Markdown-Karte). Nennt der Nutzer bereits einen konkreten Auftrag "
-                "(z. B. Datei + ‚erstelle Listings', konkrete SKU-Frage), KEINE Karte vorschalten "
-                "— direkt ausführen. Automatisch höchstens EINMAL pro Session; auf /skube:start "
-                "immer."
+            context = lang_rule + (
+                "Skube is connected. START CARD rule: on the FIRST Skube-related turn of this "
+                "session with no concrete task (greeting, vague question, 'what can you do', "
+                "marketplace/listing mentioned) show the Skube start card FIRST — spec in "
+                f"{plugin_root}/commands/start.md (widget tier if an inline-widget tool exists, "
+                "else the Markdown card; render its fixed strings in the session language). If "
+                "the user already gives a concrete task (file + 'create listings', a specific "
+                "SKU question), do NOT inject the card — execute directly. Auto-show at most "
+                "ONCE per session; on /skube:start always."
             )
         else:
-            context = (
-                "Skube ist installiert, aber dieses Gerät ist noch nicht verbunden. "
-                "WENN der Nutzer etwas über Listings/Marktplätze/Skube sagt ODER die Session gerade "
-                "erst beginnt, begrüße ihn mit GENAU EINER freundlichen Zeile (Sprache des Nutzers, "
-                "Deutsch wenn unklar): '👋 Skube ist startklar. Tippe /skube:connect — öffnet kurz "
-                "deinen Browser, kein Schlüssel nötig. Danach sag einfach, was du listen willst.' "
-                "Keine technischen Details, keine weiteren Schritte, kein Jargon."
+            context = lang_rule + (
+                "Skube is installed but this device is not connected yet. IF the user mentions "
+                "listings/marketplaces/Skube OR the session just started, greet them with "
+                "EXACTLY ONE friendly line in the session language (English if unknown): "
+                "'👋 Skube is ready. Type /skube:connect — opens your browser briefly, no key "
+                "to paste. Then just tell me what you want to list.' No technical details, no "
+                "extra steps, no jargon."
             )
         print(json.dumps({
             "hookSpecificOutput": {
