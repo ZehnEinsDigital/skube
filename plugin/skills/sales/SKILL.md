@@ -30,7 +30,11 @@ runs server-side via Skube.
 
 ## Ausgabe-Design (PFLICHT)
 
-Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** nach
-`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`: Widget-Stufe (D-Struktur + Standard-JS, Kopf-Badge =
-Job-Name in Magenta #FF206E, Interaktives in Cobalt #3D5AFE), ohne Inline-Widget-Tool die
-Markdown-Karte. Ergebnisse vollständig, Input-Echo zugeklappt (fold), jede Zahl mit Woher.
+Jede Ergebnis-Ausgabe an den User ist eine **Skube-Karte** (`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`).
+**Widget-Stufe (Session hat ein Inline-Widget-Tool): NICHT selbst layouten.** Baue NUR die
+Datenstruktur `D` (Schema in CARD_DESIGN.md; hier: `head.job = "Verkäufe"`, `head.icon = "chart-bar"`),
+schreibe sie als JSON-Datei und rendere deterministisch:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout ist der fertige Widget-Code.
+Chat-Text danach: EIN Satz + Weiter-Zeile — Karteninhalte nie doppeln. Ohne Widget-Tool: die
+Markdown-Karte aus CARD_DESIGN.md. Ergebnisse vollständig, Input-Echo/Longtail zugeklappt
+(`fold: true`), jede Zahl mit Woher.

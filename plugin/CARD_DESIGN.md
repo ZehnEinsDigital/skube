@@ -22,6 +22,12 @@ Status bleibt semantisch. Sonst Host-Variablen (`var(--text-primary)` usw.) — 
 Karte = `<div id="sk-card">` + `<script>` mit einer Datenstruktur `D` + dem Standard-JS unten.
 Der Agent baut NUR `D` — das Layout kommt aus dem JS, dadurch sieht jede Karte identisch aus.
 
+**Empfohlener Weg — nicht abtippen:** `D` als JSON-Datei schreiben und deterministisch rendern:
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout ist der fertige Widget-Code
+(das Skript liest das Standard-JS unten aus dieser Datei; der Release-Build spiegelt es
+automatisch aus `render_card.py`). Das JS unten nur dann 1:1 übernehmen, wenn Python in der
+Session nicht verfügbar ist.
+
 ```js
 D = {
   head: { icon: "chart-bar", emoji: "📊", job: "Verkäufe", title: "Amazon DE · 30 Tage", status: "done" },
