@@ -240,10 +240,12 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
 - **Every checkpoint result is a CHECKPOINT CARD** (engine `core/checkpoint_template.md`) — and it is
   NEVER truncated: every group/field/finding written out; big result sets get structure (one heading +
   table per group), not cuts.
-  **Widget tier (preferred):** if THIS session has an inline-widget tool (e.g. `show_widget` from a
-  visualize MCP), render the card deterministically — `python3 core/render_card.py <cp0..cp7>
-  "<run_dir>" [--questions <file.json>] [--lang <ISO code>]` (gateway env) — and pass its stdout
-  as the widget code. LANGUAGE: English-first — pass the session language (`--lang en` default,
+  **Widget tier (preferred — the Claude Desktop app HAS `show_widget`):** if THIS session has an
+  inline-widget tool (e.g. `show_widget` from a visualize MCP), render the card deterministically —
+  `python3 core/render_card.py <cp0..cp7> "<run_dir>" [--questions <file.json>] [--lang <ISO code>]`
+  (gateway env) — then **DISPLAY it by CALLING `show_widget`** with that stdout as the `widget_code`
+  (call the visualize `read_me` once per session first). **NEVER paste the HTML/JS into the chat as
+  text — printed HTML does not render (that was the bug).** LANGUAGE: English-first — pass the session language (`--lang en` default,
   `de` built in; any OTHER language: translate the UI keys from `core/render_card.py` `_STRINGS`
   once into a small JSON and pass `--labels <file.json>`). ALL other user-facing text (sentences,
   questions, the closing next-step line, markdown cards) follows the session language too.

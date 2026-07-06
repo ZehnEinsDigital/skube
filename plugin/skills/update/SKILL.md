@@ -44,7 +44,7 @@ Partial update (UPDATE_PARTIAL), never delete. Never handle Amazon credentials; 
 ## Output design (MANDATORY)
 
 Every result output to the user is a **Skube card** (`${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`).
-**Widget tier (session has an inline-widget tool): do NOT lay it out yourself.** Build ONLY the
+**Widget tier (session has an inline-widget tool): do NOT lay it out yourself; DISPLAY it by CALLING `show_widget`** (call the visualize `read_me` once first; NEVER paste the HTML/JS into the chat as text — it won't render; see CARD_DESIGN.md "HOW TO DISPLAY IT"). Build ONLY the
 data structure `D` (schema in CARD_DESIGN.md; here: `head.job = "Update"`, `head.icon = "edit"`),
 write it as a JSON file and render deterministically:
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/card.py" <d.json>` → stdout is the finished widget code.

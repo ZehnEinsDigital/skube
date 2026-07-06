@@ -19,6 +19,15 @@ Status stays semantic. Everything else host variables (`var(--text-primary)` etc
 
 ## Widget tier (session has an inline-widget tool)
 
+**🔴 HOW TO DISPLAY IT — this is the step that was missing. If a `show_widget` tool exists in the session
+(e.g. `mcp__visualize__show_widget` — the Claude Desktop app HAS it), you MUST render the card as a widget.
+Do it by CALLING the tool, not by printing HTML:**
+1. **Once per session, before your first widget:** call the visualize `read_me` tool (its required setup).
+2. Build `D` → `card.py` → the finished widget code (below).
+3. **Call `show_widget`** with that code as the `widget_code` argument. **NEVER paste the `<div>`/`<script>`
+   into the chat as text** — printed HTML does NOT render; that is exactly why users saw a plain table.
+Only when NO `show_widget`/inline-widget tool exists in the session → the Markdown fallback below.
+
 Card = `<div id="sk-card">` + `<script>` with a data structure `D` + the standard JS below.
 The agent builds ONLY `D` — the layout comes from the JS, so every card looks identical.
 

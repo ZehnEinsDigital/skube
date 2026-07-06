@@ -30,9 +30,14 @@ into that language — layout, colors, icons and the slash commands stay exactly
   locked for a connected account. (The endpoint is `/v1/me/marketplaces`; there is no plain `/v1/me`.)
 - NO further queries, NO engine provisioning for the card — it must be up in seconds.
 
-## Tier 1 — Widget (if the session has an inline-widget tool, e.g. `show_widget`)
+## Tier 1 — Widget (DEFAULT — when a `show_widget` tool exists in the session; the Claude Desktop app HAS it)
 
-Render exactly this HTML — but the marketplace chips below are the **not-connected / Free default**;
+**Display this by CALLING the `show_widget` tool** — first call the visualize `read_me` tool once (its
+setup), then pass the HTML below to `show_widget` as `widget_code`. **Do NOT print the HTML into the chat
+as text** — pasted HTML does not render and the user just sees code (that was the bug). Only if no
+`show_widget`/inline-widget tool exists → the Tier-2 Markdown fallback.
+
+Build exactly this HTML — but the marketplace chips below are the **not-connected / Free default**;
 **replace each chip per the `GET /v1/me/marketplaces` response** (see "Determine state"): `connected`
 → green ✅ chip, `locked:false` → neutral chip **without** a lock (Pro-unlocked, connectable), `locked:true`
 → 🔒 chip. Change nothing else (the layout is fixed so every card looks identical). The buttons send the
