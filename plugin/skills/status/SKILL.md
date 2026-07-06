@@ -28,6 +28,7 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
        `connection.py pin <credential_id>`. NEVER guess — never risk the wrong account.
      - NONE → tell them to connect a marketplace in the Skube web app, then stop.
    The pin **persists** (`~/.skube/.env`), so a later or compacted session reuses it — no re-asking.
+1c. **Only a product NAME, no SKU?** Resolve it first — `GET {SKUBE_API_URL}/v1/amazon/listings/search?name=<name>&marketplace=<market>&credential_id=<pinned>` (Bearer `SKUBE_API_KEY`) → YOUR listings whose title matches, each with `sku` + `asin` + `title` + `issue_count`. One hit → use its `sku`. Several → show them and let the user pick. Only when it returns nothing, ask for the SKU. (Amazon has no name filter for a seller's own listings; Skube pages them and matches the title.)
 2. GET `{SKUBE_API_URL}/v1/amazon/listings/<sku>/issues?marketplace=<market>&credential_id=<pinned>` with
    Bearer `SKUBE_API_KEY` (read-only proxy — the server calls SP-API with the vaulted creds).
 3. Summarize in plain words: what is live, suppressed, or erroring — and why.

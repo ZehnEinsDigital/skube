@@ -16,6 +16,7 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
 
 1. Silent: if `~/.skube/.env` has no `SKUBE_API_KEY`, ask them to run `/skube:connect` once, then stop.
    Otherwise run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth + brain).
+   - **Only a product NAME, no SKU?** Resolve it first — `GET {SKUBE_API_URL}/v1/amazon/listings/search?name=<name>&marketplace=<mkt>&credential_id=<pinned>` (Bearer `SKUBE_API_KEY`) returns YOUR listings whose title matches, each with `sku` + `asin` + `title` + `issue_count`. One hit → use its `sku`. Several → show the candidates and let the user pick. Only when the search returns nothing, ask the user for the SKU. (Amazon has no name filter for a seller's own listings; Skube pages them and matches the title.)
 2. Gather evidence server-side (read-only): the feed processing report for a just-submitted feed, and/or
    the listing's `issues[]` via `{SKUBE_API_URL}/v1/amazon/listings/<sku>/issues` (Bearer `SKUBE_API_KEY`).
 3. Reason over it WITH Skube's served MISTAKES + learnings (the brain) and name the root cause in plain words.
