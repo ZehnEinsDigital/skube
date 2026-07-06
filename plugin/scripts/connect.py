@@ -19,13 +19,28 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import bootstrap  # noqa: E402  (after sys.path tweak so it works regardless of cwd)
+import connection  # noqa: E402  (same scripts dir)
 
 
 def main() -> None:
     bootstrap.load_dotenv()  # pick up SKUBE_API_URL from ~/.skube/.env (GUI has no shell env)
     api_url = (os.environ.get("SKUBE_API_URL") or bootstrap.DEFAULT_API_URL).strip()
     dest = bootstrap.connect_via_browser(api_url)
-    print(f"SKUBE connected: saved to {dest}. Just describe what you want to list on Amazon.")
+    # Auto-pin when the account has exactly ONE connection, so a single-seller never has to
+    # re-pick "which account?" in a later (or compacted) session. Several (agency) → leave
+    # unpinned; the skill asks which, then pins. Best-effort: never fail connect over this.
+    note = ""
+    try:
+        conns = connection.list_connections()
+        if len(conns) == 1:
+            only = conns[0]
+            bootstrap.save_credential_id(only["credential_id"], only["marketplace"], "DE")
+            note = f" Account: {only['label'] or only['marketplace']} (pinned)."
+        elif len(conns) > 1:
+            note = f" You have {len(conns)} connections — I'll ask which one at list/upload time."
+    except SystemExit:
+        pass  # listing failed (e.g. transient) — connect still succeeded; skill will pin later
+    print(f"SKUBE connected: saved to {dest}.{note} Just describe what you want to list on Amazon.")
 
 
 if __name__ == "__main__":

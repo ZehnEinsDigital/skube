@@ -29,10 +29,15 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
    the `_gateway_shim` on PYTHONPATH, key/url from `~/.skube/.env`).
 3. Validate via `{SKUBE_API_URL}/v1/amazon/validate` (op=patch); fix any issues.
 4. Apply via **one call** `POST {SKUBE_API_URL}/v1/amazon/upload` with `{credential_id, marketplace, sku,
-   "op": "patch", body}` — only after the user confirms. Returns `mode: LIVE` on a real change; a **409**
-   means live uploads aren't enabled for the connection (→ tell the user to flip the Web-App Connections
-   toggle). No token handling. (Older backend without `/upload`: fall back to the two-step
-   `live-intents`→`submit` with the SAME body — see the CP6 slice.)
+   "op": "patch", body}` — only after the user confirms. No token handling. (Older backend without
+   `/upload`: fall back to the two-step `live-intents`→`submit` with the SAME body — see the CP6 slice.)
+   - **🔴 Self-check the response `mode` BEFORE you say a word to the user.** A real change returns
+     `"mode": "LIVE"`. **`"mode": "VALIDATION_PREVIEW"` means NOTHING was written** — NEVER report it as
+     done/updated/live; it is not a "backend blocker", redo the call on the real path. A **409** = live
+     uploads not enabled for the connection (→ tell the user to flip the Web-App Connections toggle).
+   - **Verify, then claim:** read the change back (`GET /v1/amazon/listings/<sku>/issues` or `…/item`) and
+     tell the user it's live ONLY once the read-back confirms it — never announce success from the submit
+     response alone.
 
 Partial update (UPDATE_PARTIAL), never delete. Never handle Amazon credentials; runs server-side via Skube.
 

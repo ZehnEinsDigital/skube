@@ -26,6 +26,10 @@ silently read from or write to a non-Skube service.** Default when data is missi
 ## 0b. Pick the marketplace CONNECTION — FIRST, before CP0 (ISOLATION-CRITICAL)
 Every run targets exactly ONE connection **or runs connection-less in build-only mode**. Decide before
 anything else:
+- **First, check for a remembered connection:** `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connection.py" current`.
+  If `pinned` is set, offer to continue with it in ONE short line ("Continue on <label>? or switch") and reuse
+  it on yes — for an agency account ALWAYS confirm, never silently reuse. This avoids re-asking "which
+  account?" on every fresh/compacted session. If nothing is pinned, resolve it now:
 - Fetch the user's marketplaces + connections silently:
   `curl -s -H "Authorization: Bearer $SKUBE_API_KEY" "$SKUBE_API_URL/v1/me/marketplaces"` (key/url from
   `~/.skube/.env`). It returns each supported marketplace with `connected`/`locked` and, per marketplace,
@@ -46,8 +50,10 @@ anything else:
     the **locked** ones greyed-out as a gentle upsell ("Otto, eBay … you unlock these when you book more
     accounts" — in the user's language).
 - Remember the chosen connection's `marketplace` (platform), `credential_id`, label and country (default
-  `DE`). **Pin it for the whole run.** If the user picks a marketplace whose `live` flag is false, say it's
-  connectable but its run isn't switched on yet, and offer a live one (Amazon).
+  `DE`). **Pin it for the whole run**, and **persist it** so a later/compacted session reuses it without
+  re-asking: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connection.py" pin <credential_id> --platform <marketplace> --market <country>`.
+  If the user picks a marketplace whose `live` flag is false, say it's connectable but its run isn't switched
+  on yet, and offer a live one (Amazon).
 
 **Gateway env — prefix EVERY engine command with the PINNED connection** (so every read/write hits exactly
 the chosen account; the user has no marketplace credentials locally). `$SKUBE_ENGINE_DIR` is exported by

@@ -127,24 +127,76 @@ def load_dotenv() -> None:
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
-def save_api_key(key: str, api_url: str | None = None) -> pathlib.Path:
-    """Persist the Skube key to ~/.skube/.env (chmod 600) — used by /skube:connect so a
-    GUI user never edits a dotfile by hand. Refuses anything that isn't an lk_live_ key."""
-    key = (key or "").strip()
-    if not key.startswith("lk_live_"):
-        raise SystemExit("SKUBE: that is not a Skube key (it must start with lk_live_). "
-                         "Get it on the Connect page of the Skube web app.")
+def _read_env_file() -> dict[str, str]:
+    """Parse ~/.skube/.env into a dict (best-effort; comments/blank lines skipped)."""
+    path = _config_env_path()
+    out: dict[str, str] = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            out[key.strip()] = value.strip().strip('"').strip("'")
+    return out
+
+
+def _upsert_env(updates: dict[str, str | None]) -> pathlib.Path:
+    """Merge KEY=VALUE updates into ~/.skube/.env, PRESERVING every other key (chmod 600).
+
+    Critical: /skube:connect (save_api_key) and connection-pinning (save_credential_id) both
+    write here. A naive full-rewrite (the old save_api_key) would wipe the other's value — so a
+    reconnect used to drop the pinned SKUBE_CREDENTIAL_ID. Always merge. A value of None/"" deletes
+    that key.
+    """
     dest = _config_env_path()
     dest.parent.mkdir(parents=True, exist_ok=True)
-    lines = [f"SKUBE_API_KEY={key}"]
-    if api_url and api_url.strip():
-        lines.append(f"SKUBE_API_URL={api_url.strip()}")
-    dest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    merged = _read_env_file()
+    for key, value in updates.items():
+        if value is None or str(value).strip() == "":
+            merged.pop(key, None)
+        else:
+            merged[key] = str(value).strip()
+    dest.write_text("\n".join(f"{k}={v}" for k, v in merged.items()) + "\n", encoding="utf-8")
     try:
         os.chmod(dest, 0o600)
     except OSError:
         pass
     return dest
+
+
+def save_api_key(key: str, api_url: str | None = None) -> pathlib.Path:
+    """Persist the Skube key to ~/.skube/.env (chmod 600) — used by /skube:connect so a
+    GUI user never edits a dotfile by hand. Refuses anything that isn't an lk_live_ key.
+    Merges, so a previously pinned SKUBE_CREDENTIAL_ID survives a reconnect."""
+    key = (key or "").strip()
+    if not key.startswith("lk_live_"):
+        raise SystemExit("SKUBE: that is not a Skube key (it must start with lk_live_). "
+                         "Get it on the Connect page of the Skube web app.")
+    updates: dict[str, str | None] = {"SKUBE_API_KEY": key}
+    if api_url and api_url.strip():
+        updates["SKUBE_API_URL"] = api_url.strip()
+    return _upsert_env(updates)
+
+
+def save_credential_id(
+    credential_id: str, platform: str | None = None, market: str | None = None
+) -> pathlib.Path:
+    """Persist the chosen marketplace CONNECTION so it survives a fresh/compacted session.
+
+    Without this the pin is session-only (an env var) and every new chat re-asks 'which
+    account?' (exactly the friction a compacted session hit). Persisting it — merged, never
+    clobbering the API key — lets load_dotenv() restore it next session. The skill still
+    CONFIRMS before reusing it, so agency multi-account isolation is preserved."""
+    cid = (credential_id or "").strip()
+    if not cid:
+        raise SystemExit("SKUBE: no credential_id to pin.")
+    updates: dict[str, str | None] = {"SKUBE_CREDENTIAL_ID": cid}
+    if platform and platform.strip():
+        updates["SKUBE_PLATFORM"] = platform.strip().lower()
+    if market and market.strip():
+        updates["SKUBE_MARKETPLACE"] = market.strip()
+    return _upsert_env(updates)
 
 
 def validate_config(env: dict) -> list[str]:
@@ -432,6 +484,37 @@ def _export_session_env(
         pass
 
 
+def _resolve_marketplaces(env: dict, api_url: str, api_key: str) -> list[str]:
+    """The marketplace SET to provision the engine for (multi-marketplace = pull the UNION snapshot).
+
+    Priority: (1) an explicit ``SKUBE_PLATFORM`` pin — may be a comma/space-separated set (dev/override);
+    (2) the account's CONNECTED marketplaces from ``/v1/me/marketplaces`` so a Pro seller who connected
+    several gets ALL their adapters in one bundle and can pick any subset in-chat, while a Free/single-MP
+    account gets its one; (3) fallback ``amazon`` (fresh account = build-only mode, or ANY error — never
+    break bootstrap). Multi is only requested when the tier allows it; the server also gates it.
+    """
+    pinned = (env.get("SKUBE_PLATFORM") or "").strip().lower()
+    if pinned:
+        mps = [m for m in (p.strip() for p in pinned.replace(",", " ").split()) if m]
+        return mps or ["amazon"]
+    try:
+        req = urllib.request.Request(
+            f"{api_url.rstrip('/')}/v1/me/marketplaces",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:  # noqa: S310 — trusted Skube host
+            data = json.loads(resp.read())
+        connected = sorted({str(i["marketplace"]).lower()
+                            for i in data.get("marketplaces", []) if i.get("connected")})
+        if not connected:
+            return ["amazon"]  # fresh account → single default (catalog/build-only still works)
+        multi_ok = bool(data.get("capabilities", {}).get("multi_marketplace"))
+        # A single-MP tier only ever pulls one (defensive — the snapshot endpoint also 403s a multi pull).
+        return connected if (len(connected) == 1 or multi_ok) else connected[:1]
+    except Exception:  # noqa: BLE001 — bootstrap must never fail over this; fall back to single default
+        return ["amazon"]
+
+
 def main() -> None:
     load_dotenv()
     env = os.environ
@@ -441,9 +524,14 @@ def main() -> None:
 
     api_url = env.get("SKUBE_API_URL", DEFAULT_API_URL)
     api_key = env["SKUBE_API_KEY"]
-    # The marketplace the session picked (W7) — scopes the brain + engine pull. Defaults to amazon
-    # so the existing single-marketplace flow is unchanged when nothing is pinned.
-    marketplace = (env.get("SKUBE_PLATFORM") or "amazon").strip().lower() or "amazon"
+    # The marketplace SET this account uses — a comma set pulls the UNION engine snapshot (Pro+; the
+    # server gates it), so a multi-marketplace seller has every needed adapter and picks any subset
+    # in-chat. ``engine_slug`` = the set for the engine pull; ``primary`` (first) = the brain/seed
+    # bootstrap (each MP's catalog is served LIVE at runtime, so one brain reference suffices). A
+    # single connected/default marketplace behaves exactly as before.
+    marketplaces = _resolve_marketplaces(env, api_url, api_key)
+    engine_slug = ",".join(marketplaces)
+    primary = marketplaces[0]
 
     # Everything session-scoped and ephemeral: no durable brain/engine copy survives past
     # this run (reaped by session_cleanup.py per its lease — see T3).
@@ -458,14 +546,14 @@ def main() -> None:
         engine_source = "override"
     else:
         engine_dir = provision_engine(
-            api_url, api_key, session_dir / "engine", marketplace=marketplace
+            api_url, api_key, session_dir / "engine", marketplace=engine_slug
         )
         engine_source = "auto"
 
     # Harden the engine project's Claude settings so opening it can't egress to SP-API.
     harden_engine_claude_settings(engine_dir)
 
-    bundle = fetch_brain(api_url, api_key, marketplace=marketplace)
+    bundle = fetch_brain(api_url, api_key, marketplace=primary)
     write_brain_reference(bundle, session_dir)
 
     # Task 9 chokepoint: bind this run to a live, entitled account. Soft rollout — if the mint

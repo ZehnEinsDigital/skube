@@ -16,11 +16,25 @@ read from or write to a non-Skube service.** Default for a missing SKU: just ask
 
 1. Silent: if `~/.skube/.env` has no `SKUBE_API_KEY`, ask them to run `/skube:connect` once, then stop.
    Otherwise run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth + brain).
-2. GET `{SKUBE_API_URL}/v1/amazon/listings/<sku>/issues?marketplace=DE` with Bearer `SKUBE_API_KEY`
-   (read-only proxy — the server calls SP-API with the vaulted creds).
+1b. **Pin a connection — a live status needs it.** A seller-specific status call needs the
+   `credential_id` of the account; without it the gateway returns **HTTP 422 "credential_id required"**.
+   NEVER guess or probe credential endpoints yourself (the credential-scanning guard will block it, rightly)
+   — use ONLY the helper:
+   - `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connection.py" current` → if `pinned` is set, use it (for an
+     agency account, confirm in one short line: "checking on <label> — switch?").
+   - else `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connection.py" list`:
+     - exactly ONE connection → pin it silently: `connection.py pin <credential_id>`.
+     - SEVERAL (an agency holds one account per client) → show the `label`s and **ASK which**, then
+       `connection.py pin <credential_id>`. NEVER guess — never risk the wrong account.
+     - NONE → tell them to connect a marketplace in the Skube web app, then stop.
+   The pin **persists** (`~/.skube/.env`), so a later or compacted session reuses it — no re-asking.
+2. GET `{SKUBE_API_URL}/v1/amazon/listings/<sku>/issues?marketplace=<market>&credential_id=<pinned>` with
+   Bearer `SKUBE_API_KEY` (read-only proxy — the server calls SP-API with the vaulted creds).
 3. Summarize in plain words: what is live, suppressed, or erroring — and why.
 
-Read-only. Never handle Amazon credentials; the call runs server-side via Skube.
+Read-only. Never handle Amazon credentials; the call runs server-side via Skube. **Don't claim "connected"
+until a connection is pinned** — bootstrap/auth succeeding only means the API key resolves; a live status
+still needs the pinned `credential_id`.
 
 ## Output design (MANDATORY)
 

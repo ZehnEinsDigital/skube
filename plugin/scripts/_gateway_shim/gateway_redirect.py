@@ -368,7 +368,15 @@ def _get_listings_item(self, seller_id, sku, marketplace_ids, included_data=None
 
 
 def _write(op: str, sku, body, mode=None):  # noqa: ANN001
-    """Shared put/patch/delete writer. VALIDATION_PREVIEW -> /validate, else /submit."""
+    """Shared put/patch/delete writer. VALIDATION_PREVIEW -> /validate, else /submit.
+
+    FAIL-LOUD safety (the '25/25 live ✅ but nothing written' churn bug): the raw /submit path
+    here carries NO single-use ``live_token`` — the shim never runs the /live-intents dance — so
+    the server ALWAYS executes it as a dry-run (``mode: VALIDATION_PREVIEW``) and writes nothing.
+    Returning that as a normal result makes a dry-run look like a live upload. A real write MUST go
+    through the CP6 one-call path (POST /v1/amazon/upload), which arms the write server-side. So a
+    write (put/patch/delete) that comes back as a preview RAISES rather than reporting success.
+    """
     payload = {
         "credential_id": _resolve_credential_id(),
         "marketplace": _marketplace(),
@@ -377,8 +385,17 @@ def _write(op: str, sku, body, mode=None):  # noqa: ANN001
     }
     if body is not None:
         payload["body"] = body
-    path = "/v1/amazon/validate" if (mode or "").upper() == VALIDATION_PREVIEW else "/v1/amazon/submit"
-    return _request("POST", path, body=payload)
+    is_preview = (mode or "").upper() == VALIDATION_PREVIEW
+    path = "/v1/amazon/validate" if is_preview else "/v1/amazon/submit"
+    resp = _request("POST", path, body=payload)
+    if (not is_preview and isinstance(resp, dict)
+            and str(resp.get("mode", "")).upper() == VALIDATION_PREVIEW):
+        raise RuntimeError(
+            f"Skube: the {op} of '{sku}' ran as VALIDATION_PREVIEW — NOTHING was written to Amazon. "
+            "A live write must go through the CP6 one-call path (POST /v1/amazon/upload), which arms "
+            "the write server-side. Do NOT report this as a successful upload."
+        )
+    return resp
 
 
 def _put_listings_item(self, seller_id, sku, marketplace_ids, body, mode=None):  # noqa: ANN001

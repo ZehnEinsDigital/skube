@@ -18,15 +18,24 @@ into that language — layout, colors, icons and the slash commands stay exactly
 - **Connected?** `~/.skube/.env` contains `SKUBE_API_KEY` → chip "Connected" (green). Otherwise chip
   "Not connected yet" (amber) AND, as the topmost action, a connect tile
   (button sends `/skube:connect`).
-- **Marketplaces:** default: Amazon DE active, all 13 others locked. If connected and the
-  response from `GET $SKUBE_API_URL/v1/me` is available quickly (2s timeout, otherwise use the default),
-  mark the actually unlocked marketplaces with check marks.
+- **Marketplaces — reflect the ACCOUNT's real tier, never a hardcoded default.** When connected, call
+  **`GET $SKUBE_API_URL/v1/me/marketplaces`** (Bearer key; 2s timeout) — it returns each marketplace with
+  `connected` and `locked` + the account `tier`. Render each marketplace from that response:
+  - `connected: true` → **✅ green** (a seller account is linked).
+  - `locked: false` but not connected → **available** (a Pro-unlocked marketplace — show WITHOUT a lock,
+    it's connectable), NOT a lock icon.
+  - `locked: true` → **🔒** (needs a higher tier — the upsell).
+  So a **Pro** account sees its unlocked marketplaces open, not all-locked. Only if the call fails/times
+  out, fall back to the minimal default (Amazon DE ✅, the rest neutral) — and NEVER label everything
+  locked for a connected account. (The endpoint is `/v1/me/marketplaces`; there is no plain `/v1/me`.)
 - NO further queries, NO engine provisioning for the card — it must be up in seconds.
 
 ## Tier 1 — Widget (if the session has an inline-widget tool, e.g. `show_widget`)
 
-Render exactly this HTML (adapt the status chip and marketplace check marks to the state, change
-nothing else — the layout is fixed so every card looks identical). The buttons send the
+Render exactly this HTML — but the marketplace chips below are the **not-connected / Free default**;
+**replace each chip per the `GET /v1/me/marketplaces` response** (see "Determine state"): `connected`
+→ green ✅ chip, `locked:false` → neutral chip **without** a lock (Pro-unlocked, connectable), `locked:true`
+→ 🔒 chip. Change nothing else (the layout is fixed so every card looks identical). The buttons send the
 slash commands as a chat message (`sendPrompt`), so the right skill starts deterministically:
 
 ```html
@@ -125,7 +134,10 @@ What would you like to do? Type the command — or just say it in your own words
 | ✏️ Update a listing | "change the title of SKU …" | `/skube:update` |
 | 📈 See sales | "show my sales for the last 30 days" | `/skube:sales` |
 
-**Marketplaces:** ✅ Amazon DE · 🔒 Otto Market, eBay, Kaufland, MediaMarktSaturn, Metro Markets, ManoMano, OnBuy, Leroy Merlin, FNAC, Cdiscount, Decathlon, Voelkner, AboutYou — unlock with Pro
+**Marketplaces:** list ALL 14, marked from `GET /v1/me/marketplaces` — ✅ for `connected`, plain (no lock)
+for Pro-unlocked (`locked:false`), 🔒 only for `locked:true` (upsell). A Pro account therefore shows its
+unlocked marketplaces open, NOT all-locked. Free/not-connected default: ✅ Amazon DE · 🔒 the other 13 —
+"unlock with Pro". (Never hardcode all-locked for a connected account.)
 
 **Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime
 ```
