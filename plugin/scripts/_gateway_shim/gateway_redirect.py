@@ -27,6 +27,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import pathlib
 import ssl
 import sys
 import time
@@ -95,16 +96,44 @@ _freshness_header_cache: str | bool | None = None
 # ---- Skube cloud config (read lazily, never at import) ----------------------
 
 
+def _dotenv() -> dict:
+    """Parse ``~/.skube/.env`` (the durable config ``connect`` writes) — the file that always holds the
+    credentials. The SessionStart hook normally EXPORTS these into ``os.environ``, but if that hook did
+    not run (stale plugin version, a session that skipped it, a compacted chat), ``os.environ`` is empty
+    while the FILE still has the key — so the connection breaks even though the account IS connected
+    (card says "Connected", every call 401s). Reading the file here decouples the connection from that
+    fragile hook. Tiny file, read per call; never raises."""
+    out: dict = {}
+    try:
+        p = pathlib.Path.home() / ".skube" / ".env"
+        if p.exists():
+            for raw in p.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                out[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:  # noqa: BLE001 — a config read must never crash the shim
+        out = {}
+    return out
+
+
+def _cfg(key: str) -> str:
+    """Read a Skube config var: the session env first, then the ``~/.skube/.env`` file as a fallback."""
+    v = (os.environ.get(key) or "").strip()
+    return v if v else (_dotenv().get(key) or "").strip()
+
+
 def _api_url() -> str:
-    return (os.environ.get("SKUBE_API_URL") or _DEFAULT_API_URL).rstrip("/")
+    return (_cfg("SKUBE_API_URL") or _DEFAULT_API_URL).rstrip("/")
 
 
 def _api_key() -> str:
-    return os.environ.get("SKUBE_API_KEY", "")
+    return _cfg("SKUBE_API_KEY")
 
 
 def _marketplace() -> str:
-    return os.environ.get("SKUBE_MARKETPLACE") or _DEFAULT_MARKETPLACE
+    return _cfg("SKUBE_MARKETPLACE") or _DEFAULT_MARKETPLACE
 
 
 # ---- freshness token (T7: CP2 gateway freshness) -----------------------------
@@ -306,11 +335,11 @@ def _resolve_credential_id() -> str:
     global _credential_id
     if _credential_id is not None:
         return _credential_id
-    pinned = (os.environ.get("SKUBE_CREDENTIAL_ID") or "").strip()
+    pinned = _cfg("SKUBE_CREDENTIAL_ID")
     if pinned:
         _credential_id = pinned
         return _credential_id
-    platform = (os.environ.get("SKUBE_PLATFORM") or "amazon").strip().lower()
+    platform = (_cfg("SKUBE_PLATFORM") or "amazon").lower()
     creds = _request("GET", "/v1/credentials") or []
     matching = [str(e["id"]) for e in creds if isinstance(e, dict) and e.get("marketplace") == platform]
     if len(matching) == 1:
@@ -490,7 +519,7 @@ def _patch_payload_builder_validate() -> bool:
                 return local_validate(self, payload, mode)  # default: fast local (bulk-build safe)
             if not _api_key():
                 return local_validate(self, payload, mode)
-            mp = (os.environ.get("SKUBE_PLATFORM") or "amazon").strip().lower()
+            mp = (_cfg("SKUBE_PLATFORM") or "amazon").lower()
             params = {"credential_id": _resolve_credential_id(), "marketplace": _marketplace()}
             extra = {}
             run_id = (os.environ.get("SKUBE_RUN_ID") or "").strip()
