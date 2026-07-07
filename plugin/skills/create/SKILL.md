@@ -240,25 +240,22 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
 - **Every checkpoint result is a CHECKPOINT CARD** (engine `core/checkpoint_template.md`) — and it is
   NEVER truncated: every group/field/finding written out; big result sets get structure (one heading +
   table per group), not cuts.
-  **Widget tier (preferred — the Claude Desktop app HAS `show_widget`):** if THIS session has an
-  inline-widget tool (e.g. `show_widget` from a visualize MCP), render the card deterministically —
+  **Render it deterministically — Markdown, NOT a widget:**
   `python3 core/render_card.py <cp0..cp7> "<run_dir>" [--questions <file.json>] [--lang <ISO code>]`
-  (gateway env) — then **DISPLAY it by CALLING `show_widget`** with that stdout as the `widget_code`
-  (call the visualize `read_me` once per session first). **NEVER paste the HTML/JS into the chat as
-  text — printed HTML does not render (that was the bug).** LANGUAGE: English-first — pass the session language (`--lang en` default,
-  `de` built in; any OTHER language: translate the UI keys from `core/render_card.py` `_STRINGS`
-  once into a small JSON and pass `--labels <file.json>`). ALL other user-facing text (sentences,
-  questions, the closing next-step line, markdown cards) follows the session language too.
-  The chat text then stays SHORT: one plain sentence + the open questions + the `**Next:**` line
-  (the full tables live in the widget; never duplicate them as text). Optionally write a small
-  questions JSON (`[{"q","options":[{"label","prompt","primary"}]}]`) so decisions become clickable
-  buttons. **No widget tool → full Markdown card** per the template: heading
-  `## <Emoji> Step n/7 · <Name> — <Status>`, ONE plain sentence, `What | Result | Source` GFM
-  tables, ```text blocks for trees (as many as the data needs), numbered questions with a bold
-  recommendation, closing `**Next:**` line. NEVER ASCII boxes.
-  **Design:** all cards share ONE look (brand: magenta #FF206E = header badge + primary action,
-  cobalt #3D5AFE = interactive/section marks) — render_card.py emits it; any NON-checkpoint output
-  (e.g. SKU-meter report) follows `${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`.
+  (gateway env). It prints the finished **Markdown card** (header, stat line, `What | Result | Source`
+  GFM tables with ALL rows, ```text trees, numbered questions, closing `**Next:**`). **Print that
+  output straight into the chat — verbatim.** 🔴 Do NOT call `show_widget`, do NOT call `read_me`, do
+  NOT build any HTML: a widget costs extra round-trips + seconds of HTML generation and drags a big
+  blob through the whole session; the Markdown card renders instantly and reads identically. You may
+  lead with ONE plain-language sentence of context before the card; never duplicate the tables as prose.
+  LANGUAGE: English-first — pass the session language (`--lang en` default, `de` built in; any OTHER
+  language: translate the UI keys from `core/render_card.py` `_STRINGS` once into a small JSON and pass
+  `--labels <file.json>`). ALL user-facing text (the sentence, questions, the `**Next:**` line) follows
+  the session language. Optionally pass a questions JSON
+  (`[{"q","options":[{"label","prompt","primary"}]}]`) so the card lists the decision options with a
+  recommendation. NEVER ASCII boxes.
+  **Design:** every card shares ONE lean Markdown look — `render_card.py` emits it; any NON-checkpoint
+  output (e.g. SKU-meter report) follows `${CLAUDE_PLUGIN_ROOT}/CARD_DESIGN.md`.
   **Decisions:** when an AskUserQuestion tool is available, ALSO offer checkpoint decisions through
   it (options + recommendation) — the user clicks instead of typing.
 - **Never** tell the user to open a folder, open a project, `cd` anywhere, or run a slash command
