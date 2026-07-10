@@ -43,6 +43,15 @@ their API key.** Prefer the connector identity; fall back to the browser device-
    On no (or no clear answer): change nothing, never re-ask — it stays available in the Skube web
    app under Settings → Diagnostics & privacy.
 
+**Cloud sessions — make it permanent (once per account):** if this session had NO local browser
+(the script printed "open this link") and the device flow was used, the key only lives in THIS
+session's sandbox. After the success line + card, offer the account-level fix in TWO short lines:
+"To stay connected in every browser session, add Skube to your Claude account once:
+[open the connector dialog](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp) → Name: `Skube` · URL: `https://skube-mcp-production.up.railway.app/mcp` → Add → Authorize.
+(Leave the optional OAuth fields empty — Claude registers itself.)"
+The link only OPENS the dialog — the user pastes those two values. Never show this in desktop
+sessions (their key persists locally).
+
 **Output discipline (the user is a seller, not a developer):** no technical narration — before,
 during, or after. Never mention hosts/URLs, config files, env vars, scripts, or memory operations.
 **If the flow fails:** retry once, silently. If it still fails, say ONE plain sentence in the user's
