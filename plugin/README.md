@@ -32,10 +32,11 @@ It opens your browser to the Skube web app — log in if needed, click **Authori
 delivered to your machine and saved to `~/.skube/.env` automatically; you never copy or paste it.
 (Advanced/CLI: set `SKUBE_API_KEY` in `~/.skube/.env` yourself.) Never enter Amazon or Anthropic keys.
 
-**2b · Using Skube in the browser (claude.ai)?** Add the Skube connector to your account once —
-[click here (dialog opens prefilled)](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp) → **Add** → **Authorize**. After that every
-session on your account — browser, desktop, Cowork — is connected automatically; `/skube:connect`
-is then only needed on machines without it.
+**2b · Using Skube in the browser (claude.ai)?** Add the Skube connector to your account once:
+[open the connector dialog](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp), enter **Name** `Skube` and **URL**
+`https://skube-mcp-production.up.railway.app/mcp` (leave the optional OAuth fields empty), click **Add**, then **Authorize**. After that
+every session on your account — browser, desktop, Cowork — is connected automatically;
+`/skube:connect` is then only needed on machines without it.
 
 **3 · Use it**
 ```
