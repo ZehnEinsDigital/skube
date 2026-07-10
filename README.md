@@ -50,11 +50,12 @@ The slash commands are there if you prefer them:
 | Command | What it does |
 |---------|--------------|
 | `/skube:connect` | One-time: connect your Skube account (browser, nothing to paste) |
-| `/skube:create <feed> [brand]` | Build Amazon listings from a supplier feed |
-| `/skube:status <sku>` | What Amazon reports about a listing right now |
-| `/skube:sales [--days N]` | Your real Amazon sales — units, revenue, sessions (PII-free) |
-| `/skube:diagnose <sku>` | Explain a rejection/suppression + propose a fix |
-| `/skube:update <skus> <change>` | Partial content update (keeps ASIN/reviews) |
+| `/skube:create <feed> [brand]` | List: build marketplace listings from a supplier feed |
+| `/skube:fix <sku>` | Fix: what the marketplace reports right now + root cause + corrective patch |
+| `/skube:monitor` | Monitor: read-only health digest across all connected marketplaces |
+| `/skube:update <skus> <change>` | Update: partial price/stock/content change (keeps ASIN/reviews) |
+| `/skube:content <skus>` | Optimize: better titles/bullets/descriptions, before→after, on approval |
+| `/skube:sales [--days N]` | Report: your real Amazon sales — units, revenue, sessions (PII-free) |
 
 ## How it works (and why it's safe)
 

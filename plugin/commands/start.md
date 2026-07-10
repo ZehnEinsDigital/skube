@@ -36,13 +36,12 @@ What would you like to do? Type the command — or just say it in your own words
 
 | Job | Just say … | Command |
 |---|---|---|
-| 📦 Create listings | "create listings from my file" | `/skube:create` |
-| ✅ Check status | "what's going on with my listings?" | `/skube:status` |
-| 🩺 Health check | "is everything ok with my shops?" | `/skube:health` |
-| 🔎 Find the problem | "why isn't my listing visible?" | `/skube:diagnose` |
-| ✏️ Update listings | "raise the price of SKU … everywhere" | `/skube:update` |
-| ✨ Optimize content | "improve my titles and bullets" | `/skube:content` |
-| 📈 See sales | "show my sales for the last 30 days" | `/skube:sales` |
+| 📦 List | "list these products from my file" | `/skube:create` |
+| 🔧 Fix | "why was SKU … rejected? / is it live?" | `/skube:fix` |
+| 📡 Monitor | "is everything ok with my shops?" | `/skube:monitor` |
+| ✏️ Update | "raise the price of SKU … everywhere" | `/skube:update` |
+| ✨ Optimize | "improve my titles and bullets" | `/skube:content` |
+| 📈 Report | "show my sales for the last 30 days" | `/skube:sales` |
 
 **Marketplaces:** ✅ Amazon DE · Otto · eBay · Kaufland · MediaMarktSaturn · Metro · ManoMano · OnBuy ·
 Leroy Merlin · FNAC · Cdiscount · Decathlon · Voelkner · AboutYou — mark each from `/v1/me/marketplaces`
