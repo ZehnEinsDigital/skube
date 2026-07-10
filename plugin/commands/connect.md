@@ -4,7 +4,17 @@ argument-hint: ""
 ---
 
 One-time setup: connect this device to the user's Skube account. **Do NOT ask the user to paste
-their API key.** Run the browser device-auth flow instead.
+their API key.** Prefer the connector identity; fall back to the browser device-auth flow.
+
+0. **CONNECTOR FIRST:** if this session has the Skube MCP tools (a tool named
+   `mint_session_key` — the plugin bundles the Skube connector; it appears once the user has
+   authorized Skube on their Claude account), skip the device flow entirely: call
+   `mint_session_key`, then save the returned key via STDIN (never argv, never echo it):
+   ```
+   printf %s 'THE_KEY' | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/save_key.py"
+   ```
+   Then continue at step 3's card. If the tools are NOT available (or the tool errors because the
+   connector was never authorized), fall through to the device flow below.
 
 1. Run:
    ```
@@ -40,4 +50,4 @@ language ("The connection didn't work — I'll report it to the Skube team.") an
 `/skube:feedback`. Do NOT stream debugging steps or internals at the user; keep any diagnosis to
 yourself unless the user explicitly asks for details.
 
-Never request, display, or write the API key yourself — the browser flow handles it end to end.
+Never request or display the API key. Device flow: the script handles the key end to end. Connector branch: pass the minted key ONLY into save_key.py via stdin and never print it in your reply.
