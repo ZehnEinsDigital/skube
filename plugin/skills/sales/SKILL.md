@@ -4,7 +4,7 @@ description: Show real Amazon sales for the connected seller — units sold, rev
 when_to_use: 'Trigger on: "wie viel hab ich verkauft", "Verkaufszahlen", "Amazon Sales", "Umsatz für SKU X", "wie läuft Produkt Y", "units sold", "sales for my listing", "how many did I sell", "Monatsumsatz".'
 ---
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth). Then fetch THIS job's
+Fetch THIS job's
 **current playbook from Skube's server and follow it EXACTLY** — the workflow lives server-side, so it stays
 up to date with no plugin release:
 
