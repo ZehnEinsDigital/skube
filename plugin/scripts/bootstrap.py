@@ -23,7 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-DEFAULT_API_URL = "https://api.skube.app"
+DEFAULT_API_URL = "https://skube-api-production.up.railway.app"
 # Legacy durable engine location. No longer the auto-provision target (T3): the engine is
 # now provisioned into the ephemeral session dir (session_dir / "engine") so it is reaped
 # alongside the brain. Kept only as the path session_env.py still recognizes for back-compat

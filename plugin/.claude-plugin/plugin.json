@@ -1,11 +1,11 @@
 {
   "name": "skube",
-  "version": "0.5.25",
+  "version": "0.5.26",
   "description": "Skube — your Amazon listing copilot in Claude Code. Create, validate, update, and fix marketplace listings; the reasoning runs on your plan, credentials and uploads stay on the Skube cloud.",
   "author": {
     "name": "Skube"
   },
-  "homepage": "https://skube.app",
+  "homepage": "https://skube.ai",
   "license": "Proprietary",
   "keywords": [
     "amazon",
