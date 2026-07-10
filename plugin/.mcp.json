@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "skube": {
+      "type": "http",
+      "url": "https://skube-mcp-production.up.railway.app/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SKUBE_API_KEY}"
+      }
+    }
+  }
+}
