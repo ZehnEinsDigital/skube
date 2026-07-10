@@ -24,7 +24,7 @@ from __future__ import annotations
 import os
 import pathlib
 
-DEFAULT_API_URL = "https://api.skube.app"
+DEFAULT_API_URL = "https://skube-api-production.up.railway.app"
 
 
 def _engine_dir() -> pathlib.Path:

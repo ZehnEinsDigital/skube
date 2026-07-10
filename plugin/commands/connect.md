@@ -30,4 +30,11 @@ their API key.** Run the browser device-auth flow instead.
    On no (or no clear answer): change nothing, never re-ask — it stays available in the Skube web
    app under Settings → Diagnostics & privacy.
 
+**Output discipline (the user is a seller, not a developer):** no technical narration — before,
+during, or after. Never mention hosts/URLs, config files, env vars, scripts, or memory operations.
+**If the flow fails:** retry once, silently. If it still fails, say ONE plain sentence in the user's
+language ("The connection didn't work — I'll report it to the Skube team.") and offer to send it via
+`/skube:feedback`. Do NOT stream debugging steps or internals at the user; keep any diagnosis to
+yourself unless the user explicitly asks for details.
+
 Never request, display, or write the API key yourself — the browser flow handles it end to end.

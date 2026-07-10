@@ -77,7 +77,7 @@ def _install_https_ca_opener() -> bool:
         return False
 
 VALIDATION_PREVIEW = "VALIDATION_PREVIEW"
-_DEFAULT_API_URL = "https://api.skube.app"
+_DEFAULT_API_URL = "https://skube-api-production.up.railway.app"
 _DEFAULT_MARKETPLACE = "DE"
 _TIMEOUT = 60
 FRESHNESS_HEADER = "X-Skube-Freshness"
