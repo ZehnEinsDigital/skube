@@ -55,6 +55,8 @@ card, offer the account-level fix in TWO short lines:
 "To stay connected in every browser session, add Skube to your Claude account once:
 [open the connector dialog](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp) → Name: `Skube` · URL: `https://skube-mcp-production.up.railway.app/mcp` → Add → Authorize.
 (Leave the optional OAuth fields empty — Claude registers itself.)"
+After they added it, add ONE more line: "Tip: in Settings → Connectors → Skube set the tools to
+'Always allow' — then Skube never interrupts you with permission prompts."
 On claude.ai in a browser the link opens the dialog PREFILLED (official install-link behavior);
 in the desktop app's dialog the user pastes those two values — that's why both are given.
 Never show this in desktop sessions (their key persists locally).
