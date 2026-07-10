@@ -19,8 +19,11 @@ visible texts — the table structure and the `/skube:*` commands stay identical
 
 ## Determine state (silently — ONE quick check, no engine work)
 
-- **Connected?** `~/.skube/.env` contains a `SKUBE_API_KEY` → "✅ connected". Otherwise "⏸️ not connected
-  yet" and make the FIRST table row the connect row (`🔌 Connect | once, via browser | /skube:connect`).
+- **Connected?** `~/.skube/.env` contains a `SKUBE_API_KEY` → "✅ connected". If not, do ONE
+  ToolSearch for `mint_session_key`: available → "✅ connected" too (the account is linked via the
+  Skube connector; the first job mints its key silently — do NOT mint here, keep the card instant).
+  Neither → "⏸️ not connected yet" and make the FIRST table row the connect row
+  (`🔌 Connect | once, via browser | /skube:connect`).
 - **Marketplaces (only if connected):** exactly ONE call — `GET $SKUBE_API_URL/v1/me/marketplaces` (Bearer
   key, 2s timeout). Mark each marketplace: `connected:true` → ✅ · `locked:false` → plain (Pro-unlocked,
   connectable, no lock) · `locked:true` → 🔒 (upsell). If the call fails/times out → fall back to
