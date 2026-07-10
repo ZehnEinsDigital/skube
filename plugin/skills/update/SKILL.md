@@ -4,7 +4,7 @@ description: Change the content of existing Amazon listings (title, bullets, des
 when_to_use: 'Trigger on: "ändere die Beschreibung von X", "update den Titel von Y", "passe Listing Z an", "korrigiere die Bullets bei X", "update my listing", "change the title of SKU Y".'
 ---
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth). Then fetch THIS job's
+Fetch THIS job's
 **current playbook from Skube's server and follow it EXACTLY** — the workflow lives server-side, so it stays
 up to date with no plugin release:
 

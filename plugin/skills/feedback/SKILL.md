@@ -4,7 +4,7 @@ description: Send the user's feedback (praise, gripe, feature wish, bug story) t
 when_to_use: 'Trigger on: "/skube:feedback", "Feedback an Skube", "das nervt", "wünsche mir", "feature request", "send feedback", "tell the Skube team", "report this to skube".'
 ---
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth). Then fetch THIS job's
+Fetch THIS job's
 **current playbook from Skube's server and follow it EXACTLY** — the workflow lives server-side, so it stays
 up to date with no plugin release:
 

@@ -4,7 +4,7 @@ description: Check a listing's current state AND fix what's wrong — one job. R
 when_to_use: 'Trigger on: "status von SKU X", "ist mein Listing live?", "warum wurde X abgelehnt?", "warum ist mein Listing unterdrückt?", "SKU Y wird nicht angezeigt", "fix my rejected listing", "is my listing live?", "why was my SKU rejected?", "check my SKU".'
 ---
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth). Then fetch THIS job's
+Fetch THIS job's
 **current playbook from Skube's server and follow it EXACTLY** — the workflow lives server-side, so it stays
 up to date with no plugin release:
 

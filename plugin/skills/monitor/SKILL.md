@@ -4,7 +4,7 @@ description: Monitor all connected marketplaces — connections, active offers, 
 when_to_use: 'Trigger on: "alles ok?", "wie läuft mein Business?", "wie stehen meine Shops?", "channel health", "monitor my channels", "is everything ok?", "overall status", "check all marketplaces".'
 ---
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` quietly (auth). Then fetch THIS job's
+Fetch THIS job's
 **current playbook from Skube's server and follow it EXACTLY** — the workflow lives server-side, so it stays
 up to date with no plugin release:
 
