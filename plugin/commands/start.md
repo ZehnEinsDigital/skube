@@ -53,7 +53,8 @@ connection whose `instance` matches (voelkner/decathlon/mediamarkt/leroymerlin).
 one to work on, pin THAT connection's `credential_id` for the run — with several Mirakl connections
 choose by `instance`, never guess, never ask about "Mirakl".
 
-**Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime
+**Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime ·
+💬 `/skube:feedback` sends your words to the Skube team
 ```
 
 (Not connected → heading ends "— ⏸️ not connected yet"; the first table row is
