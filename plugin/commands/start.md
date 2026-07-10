@@ -42,7 +42,6 @@ What would you like to do? Type the command — or just say it in your own words
 | 🔎 Find the problem | "why isn't my listing visible?" | `/skube:diagnose` |
 | ✏️ Update listings | "raise the price of SKU … everywhere" | `/skube:update` |
 | ✨ Optimize content | "improve my titles and bullets" | `/skube:content` |
-| 🖼️ Product images | "new hero image for SKU …" | `/skube:images` |
 | 📈 See sales | "show my sales for the last 30 days" | `/skube:sales` |
 
 **Marketplaces:** ✅ Amazon DE · Otto · eBay · Kaufland · MediaMarktSaturn · Metro · ManoMano · OnBuy ·
