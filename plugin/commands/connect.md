@@ -6,15 +6,17 @@ argument-hint: ""
 One-time setup: connect this device to the user's Skube account. **Do NOT ask the user to paste
 their API key.** Prefer the connector identity; fall back to the browser device-auth flow.
 
-0. **CONNECTOR FIRST:** if this session has the Skube MCP tools (a tool named
-   `mint_session_key` — the plugin bundles the Skube connector; it appears once the user has
-   authorized Skube on their Claude account), skip the device flow entirely: call
-   `mint_session_key`, then save the returned key via STDIN (never argv, never echo it):
+0. **CONNECTOR FIRST — a 5-second check, never an investigation:** look at your CURRENT tool
+   list for a `mint_session_key` tool (scoped name looks like
+   `mcp__plugin_skube_skube__mint_session_key` or `mcp__skube__mint_session_key`). **Do NOT read
+   plugin files, do NOT search the filesystem, do NOT deliberate — if you cannot see the tool
+   right now, it is not there: go straight to step 1.** If it IS there: call it, then save the
+   returned key via STDIN (never argv, never echo it):
    ```
    printf %s 'THE_KEY' | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/save_key.py"
    ```
-   Then continue at step 3's card. If the tools are NOT available (or the tool errors because the
-   connector was never authorized), fall through to the device flow below.
+   Then continue at step 3's card (skip the device flow and step 4's telemetry question only if
+   already answered before). If the tool call errors, fall through to the device flow below.
 
 1. Run:
    ```
@@ -45,7 +47,9 @@ their API key.** Prefer the connector identity; fall back to the browser device-
 
 **Cloud sessions — make it permanent (once per account):** if this session had NO local browser
 (the script printed "open this link") and the device flow was used, the key only lives in THIS
-session's sandbox. After the success line + card, offer the account-level fix in TWO short lines:
+session's sandbox. ⚠️ An "Authorize skube" dialog the session itself pops up does NOT persist in
+the browser — ONLY the link below creates the durable account connector. After the success line +
+card, offer the account-level fix in TWO short lines:
 "To stay connected in every browser session, add Skube to your Claude account once:
 [open the connector dialog](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp) → Name: `Skube` · URL: `https://skube-mcp-production.up.railway.app/mcp` → Add → Authorize.
 (Leave the optional OAuth fields empty — Claude registers itself.)"
