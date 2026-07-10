@@ -11,8 +11,11 @@ their API key.** Run the browser device-auth flow instead.
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connect.py"
    ```
    (For a LOCAL test stack, prefix it with `SKUBE_API_URL="http://localhost:8000"`.)
-2. It opens the Skube web app and prints a short confirmation code + a URL. Tell the user:
-   "I've opened your browser — log in if needed, check the code matches, and click **Authorize**."
+2. The script prints the authorize URL + a short code — and states whether it could open a local
+   browser. **Mirror that truthfully, and ALWAYS lead with the URL as a clickable link:**
+   - Script says "open this link" (cloud/headless — no browser here): show the link + code and say
+     "Click this link, log in if needed, and click **Authorize**." Never claim a browser was opened.
+   - Script says "opening your browser": say so in one line — and still show the link as fallback.
 3. The script waits, receives the key automatically, and saves it to `~/.skube/.env`. When it prints
    "SKUBE connected", say ONE short line ("✅ Connected." — in the user's language) and then render the **Skube start card**
    exactly as specified in `${CLAUDE_PLUGIN_ROOT}/commands/start.md` (plain Markdown — never a widget,

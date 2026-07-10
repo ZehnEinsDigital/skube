@@ -301,15 +301,25 @@ def connect_via_browser(api_url: str, *, open_browser: bool = True, sleep=None, 
     device_code, user_code = start["device_code"], start["user_code"]
     url = f"{start['verification_uri']}?code={user_code}"
     interval = int(start.get("interval", 3))
-    print(
-        "SKUBE: opening your browser to connect. If it doesn't open, go to:\n"
-        f"  {url}\n  (confirm code: {user_code}), then click Authorize."
-    )
+    # Try the local browser FIRST, then tell the truth about what happened: in a cloud/headless
+    # session webbrowser.open() cannot reach the user's browser — the clickable link IS the flow
+    # there, so it must lead and "opening your browser" must never be claimed falsely.
+    opened = False
     if open_browser:
         try:
-            webbrowser.open(url)
+            opened = bool(webbrowser.open(url))
         except Exception:  # noqa: BLE001
-            pass
+            opened = False
+    if opened:
+        print(
+            "SKUBE: opening your browser to connect — if nothing opened, use this link:\n"
+            f"  {url}\n  (code: {user_code}) → click Authorize."
+        )
+    else:
+        print(
+            "SKUBE: open this link to connect:\n"
+            f"  {url}\n  (check the code shows {user_code}) → click Authorize."
+        )
     waited = 0
     while waited < max_wait:
         try:
