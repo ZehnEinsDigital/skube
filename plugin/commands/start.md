@@ -38,8 +38,11 @@ What would you like to do? Type the command — or just say it in your own words
 |---|---|---|
 | 📦 Create listings | "create listings from my file" | `/skube:create` |
 | ✅ Check status | "what's going on with my listings?" | `/skube:status` |
-| 🩺 Find the problem | "why isn't my listing visible?" | `/skube:diagnose` |
-| ✏️ Update a listing | "change the title of SKU …" | `/skube:update` |
+| 🩺 Health check | "is everything ok with my shops?" | `/skube:health` |
+| 🔎 Find the problem | "why isn't my listing visible?" | `/skube:diagnose` |
+| ✏️ Update listings | "raise the price of SKU … everywhere" | `/skube:update` |
+| ✨ Optimize content | "improve my titles and bullets" | `/skube:content` |
+| 🖼️ Product images | "new hero image for SKU …" | `/skube:images` |
 | 📈 See sales | "show my sales for the last 30 days" | `/skube:sales` |
 
 **Marketplaces:** ✅ Amazon DE · Otto · eBay · Kaufland · MediaMarktSaturn · Metro · ManoMano · OnBuy ·
