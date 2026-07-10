@@ -46,6 +46,11 @@ What would you like to do? Type the command — or just say it in your own words
 Leroy Merlin · FNAC · Cdiscount · Decathlon · Voelkner · AboutYou — mark each from `/v1/me/marketplaces`
 (✅ connected · plain = Pro-unlocked/connectable · 🔒 = needs a higher tier). A Pro account shows its
 marketplaces open, NOT all-locked.
+**Mirakl storefronts (Voelkner · Decathlon · MediaMarktSaturn · Leroy Merlin):** these four run ON the
+Mirakl platform — the user never needs to know that. Mark each ✅ iff the `mirakl` entry has a
+connection whose `instance` matches (voelkner/decathlon/mediamarkt/leroymerlin). When the user picks
+one to work on, pin THAT connection's `credential_id` for the run — with several Mirakl connections
+choose by `instance`, never guess, never ask about "Mirakl".
 
 **Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime
 ```
