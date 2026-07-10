@@ -36,7 +36,8 @@ delivered to your machine and saved to `~/.skube/.env` automatically; you never 
 [open the connector dialog — prefilled on claude.ai](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp), enter **Name** `Skube` and **URL**
 `https://skube-mcp-production.up.railway.app/mcp` (leave the optional OAuth fields empty), click **Add**, then **Authorize**. After that
 every session on your account — browser, desktop, Cowork — is connected automatically;
-`/skube:connect` is then only needed on machines without it.
+`/skube:connect` is then only needed on machines without it. **Tip:** in Settings → Connectors →
+Skube, set the tools to **Always allow** — then Skube never interrupts you with permission prompts.
 
 **3 · Use it**
 ```
