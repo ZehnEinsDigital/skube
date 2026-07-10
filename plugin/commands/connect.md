@@ -6,12 +6,14 @@ argument-hint: ""
 One-time setup: connect this device to the user's Skube account. **Do NOT ask the user to paste
 their API key.** Prefer the connector identity; fall back to the browser device-auth flow.
 
-0. **CONNECTOR FIRST — a 5-second check, never an investigation:** look at your CURRENT tool
-   list for a `mint_session_key` tool (scoped name looks like
-   `mcp__plugin_skube_skube__mint_session_key` or `mcp__skube__mint_session_key`). **Do NOT read
-   plugin files, do NOT search the filesystem, do NOT deliberate — if you cannot see the tool
-   right now, it is not there: go straight to step 1.** If it IS there: call it, then save the
-   returned key via STDIN (never argv, never echo it):
+0. **CONNECTOR FIRST — a 5-second check, never an investigation:** connector tools are often
+   DEFERRED (not in the visible list) — so do exactly ONE lookup: check your current tool list
+   for `mint_session_key` (scoped names look like `mcp__plugin_skube_skube__mint_session_key` or
+   `mcp__skube__mint_session_key`), and if it's not visible, run ONE ToolSearch for
+   `mint_session_key`. **That single search decides. Do NOT read plugin files, do NOT search the
+   filesystem, do NOT deliberate — no result → go straight to step 1.** If the tool IS available:
+   call it (approve the one-time permission prompt if asked), then save the returned key via
+   STDIN (never argv, never echo it):
    ```
    printf %s 'THE_KEY' | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/save_key.py"
    ```
