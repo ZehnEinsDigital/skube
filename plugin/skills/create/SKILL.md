@@ -24,8 +24,8 @@ silently read from or write to a non-Skube service.** Default when data is missi
   the marketplace the user chose, not hardcoded Amazon.
 
 ## 0b. Pick the marketplace CONNECTION — FIRST, before CP0 (ISOLATION-CRITICAL)
-Every run targets exactly ONE connection **or runs connection-less in build-only mode**. Decide before
-anything else:
+Every run targets exactly ONE connection **or STARTS connection-less for CP0–CP1** (build-only start; from
+CP2 a connection is required — see 0b). Decide before anything else:
 - **First, check for a remembered connection:** `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connection.py" current`.
   If `pinned` is set, offer to continue with it in ONE short line ("Continue on <label>? or switch") and reuse
   it on yes — for an agency account ALWAYS confirm, never silently reuse. This avoids re-asking "which
@@ -35,13 +35,16 @@ anything else:
   `~/.skube/.env`). It returns each supported marketplace with `connected`/`locked` and, per marketplace,
   the `connections` (each with `credential_id` + `label`).
 - Decide which connection:
-  - **NO connections anywhere → BUILD-ONLY MODE. Do NOT stop, do NOT send the user off to connect.**
-    Categories, product types, allowed variation themes, schemas and validation are all served from
-    Skube's cloud catalog — the whole build (CP0–CP6 local part) works without a seller account. Pick the
-    marketplace from what the user said (default Amazon, country DE), pin **no** `credential_id`, and say
-    one friendly line (in the user's language) like: *"You'll only need your Amazon account at the very end
-    for the upload — I'm building the listings in full right now."* Only the live check (CP6 preview) and
-    the upload (CP7) need the connection; offer it THERE, not now.
+  - **NO connections anywhere → start UNCONNECTED; the connection is needed at CP2, not the very end.**
+    The feed analysis (CP0–CP1: columns, structure, variants) runs without a seller account. But the
+    categories, product types, allowed variation themes and schemas come **straight from the marketplace**
+    (Skube's curated catalog is gated so it can't be scraped) — so **from CP2 on a one-time connection is
+    required** (a quick sign-in; a Free plan includes one connection). Pick the marketplace from what the
+    user said (default Amazon, country DE), pin **no** `credential_id` yet, and say one friendly line (in the
+    user's language) like: *"I'll start analyzing your file right away — for the categories I'll ask you to
+    connect once (a quick sign-in), then everything runs through."* Do CP0–CP1, then offer the connect at
+    CP2 (see CP2). **NEVER** frame it as a paywall or a technical error — it's the natural first step of
+    going live.
   - User named a marketplace AND it has exactly ONE connection → use it (confirm in one short line).
   - A marketplace has **several connections** — an agency can hold one account **per client** (e.g.
     "Amazon — Client A / Client B / Client C"). You **MUST ask which connection**, by its label.
@@ -68,8 +71,9 @@ cd "$SKUBE_ENGINE_DIR" && env SKUBE_GATEWAY=true \
   <command>
 ```
 `SKUBE_CREDENTIAL_ID` is mandatory whenever the user has more than one connection — the cloud refuses to
-guess otherwise (fail-closed isolation). In **build-only mode** (no connections) simply omit
-`SKUBE_CREDENTIAL_ID` — catalog reads (categories, product types, schemas, validation) don't need it.
+guess otherwise (fail-closed isolation). **Before a connection is picked (CP0–CP1 only)** omit
+`SKUBE_CREDENTIAL_ID` — those steps don't touch the catalog; **from CP2 on the pinned connection is
+required** (categories/schemas are served only to a connected account).
 
 - **After the pick, provision quietly (no output to the user):**
   `SKUBE_PLATFORM=<marketplace> python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.py"` — it pulls the engine
@@ -101,7 +105,24 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   **The moment a run starts (brand known, or the user clearly wants to create) IMMEDIATELY create a
   visible, clearly-named run folder** in the user's CURRENT project folder — `$CLAUDE_PROJECT_DIR` (fall
   back to the cwd): `<project>/skube-run/<brand-slug>/` with an `input/` subfolder. Do NOT create anything
-  in `~/Documents`, `~/Downloads`, `~/Desktop`, or the hidden `~/.skube`. Then give the user **ONE
+  in `~/Documents`, `~/Downloads`, `~/Desktop`, or the hidden `~/.skube`.
+  **Before asking for a file — offer a stored one (E8.1b, so the user never re-uploads the same Excel for
+  each marketplace).** Once the brand is known, silently check whether an earlier run of this brand already
+  stored its feed: `curl -s -H "Authorization: Bearer $SKUBE_API_KEY" "$SKUBE_API_URL/v1/runs?brand=<brand>"`
+  (brand ONLY — across marketplaces; for an agency add `&credential_id=<pinned>`). If the newest run has a
+  non-null `feed_id`, OFFER it in ONE line (user's language): *"I still have your file from the <marketplace>
+  run — use the same one? (or drop a new file)"*. On **yes**, download it into the input folder (keep the
+  ORIGINAL filename — its extension drives the feed reader) and skip the file ask; **remember this `feed_id`
+  for CP7**. Fetch the name and download in ONE command (so `$name` is in scope); the `[ -n "$name" ]`
+  guard means a since-deleted feed just falls through to the normal file ask instead of writing to a folder:
+  ```
+  name=$(curl -s -H "Authorization: Bearer $SKUBE_API_KEY" "$SKUBE_API_URL/v1/feeds/<feed_id>" | python3 -c 'import sys,json;print((json.load(sys.stdin) or {}).get("filename",""))' 2>/dev/null) \
+    && [ -n "$name" ] \
+    && curl -sL -H "Authorization: Bearer $SKUBE_API_KEY" "$SKUBE_API_URL/v1/feeds/<feed_id>/download" -o "<project>/skube-run/<brand-slug>/input/$name"
+  ```
+  (`-L` follows the 307 to the presigned URL.) On **no / new file**, if there's no stored feed, if the call
+  403s on Free, or if the download didn't produce a file (empty `$name`), fall through to the handover below.
+  Then give the user **ONE
   dead-clear handover line** and stop for the file — never the vague "send me the file". Example
   (in the user's language):
   > All right, I'm getting started on **<brand>**. 📁 Folder created: `skube-run/<brand>/`.
@@ -114,6 +135,16 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   pipeline reads from the input folder. (The engine CODE stays in the ephemeral
   `$SKUBE_ENGINE_DIR` for this session only and is imported via PYTHONPATH; only the run DATA — input +
   outputs — lives in the project folder, so it survives session cleanup.)
+  **Then store the feed for reuse (E8.1b, best-effort — never block on it):** unless you just REUSED a stored
+  feed above, upload the input file once so the next run/marketplace can offer it. Run this and **read the
+  `id` from the printed JSON** — that is the feed's `feed_id` (do NOT capture it into a shell variable; shell
+  state doesn't survive to CP7, so you must read the value now and carry it yourself):
+  ```
+  curl -s -H "Authorization: Bearer $SKUBE_API_KEY" -F "file=@<input-file>" "$SKUBE_API_URL/v1/feeds"
+  ```
+  The cloud dedups by content, so re-storing the same file is free (no duplicate). **Remember that `id`** and
+  pass it literally as `feed_id` in the CP7 run report. On any error (offline, Free 403) just continue —
+  storage is a nicety, not a gate. (If you reused a stored feed above, you already have its `feed_id`.)
   This project run folder is the **only** run location — **never read, reuse, or write runs in
   `$SKUBE_ENGINE_DIR/runs/`**. Each request is a **fresh** run; do not reuse a previous run's analysis or
   `column_mapping.json` unless the user explicitly says to continue an existing run.
@@ -167,7 +198,13 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   DARSTELLUNG rule in **every** CP: take the user along — show **what** you do, **why**, the concrete **source**
   (which column/feature), and the **output** as a table/tree; **never** sloppy numbers like "14 parents, 234
   children" without showing **what they're grouped by** and **from which column/feature**.
-- **CP2 — Category & template:** Use the product groups CP1 already found and resolve the matching Amazon
+- **CP2 — Category & template:** **If still unconnected (build-only start), the connection is needed NOW** —
+  categories, product types and schemas come straight from the marketplace and the cloud serves them only to
+  a connected account. Ask ONCE, friendly (user's language): *"To pull <marketplace>'s real categories and
+  required fields, connect once — a quick sign-in (your Free plan includes one connection), then it all runs
+  through."* → `/skube:connect`, then pin the connection (step 0b) and continue. Never a paywall/error tone;
+  the CP0–CP1 analysis you already showed proves the value. Then: use the product groups CP1 already found and
+  resolve the matching Amazon
   product types by **targeted search** — for each group, call the cloud's product-type search with fitting
   keywords (e.g. "aluminium foil", "cling film / Frischhaltefolie", "baking paper / Backpapier"), pick the
   best matches, and fetch the schema **only for those matched types**. **NEVER run a full catalog sync** —
@@ -204,17 +241,20 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   shell): local validation for ALL, live `VALIDATION_PREVIEW` sample ≤3, the `live_writes_enabled` upload
   preflight, and the two-step `live-intents`→`submit` write flow with its `mode: LIVE` self-check. Cross-cutting
   rules you enforce as the orchestrator: **a live upload happens ONLY after the user's explicit go** — the
-  security guard accepts that go ONLY directly from the user, never routed through you; and **build-only mode
-  (no connection): THIS is the moment to offer the connect** (or "I'll give you the finished listings as a file"
-  — in the user's language). Never block the earlier steps on the connection.
+  security guard accepts that go ONLY directly from the user, never routed through you. (By now the user is
+  connected — the connection was set at CP2; if they ever declined it there, the run couldn't have reached
+  CP6.) If the user prefers not to upload, offer the finished listings as a file instead (their choice).
 - **CP7 — Finalize:** summarize what was built (and the run cost) in one friendly message. **Then report the
   run to the cloud (silently — don't narrate) so it shows on the user's Skube web and the next run for this
   brand can reuse it:**
   1. Create the run record — `curl -s -X POST -H "Authorization: Bearer $SKUBE_API_KEY" -H "Content-Type:
-     application/json" "$SKUBE_API_URL/v1/runs" -d '{"brand":"<brand>","marketplace":"<marketplace>",
-     "country":"<country>","connection_label":"<label>","dry_run":<true|false>,
-     "status":"<succeeded|partial|failed>","summary":{"skus_in":<n>,"listings_created":<n>,
-     "listings_updated":<n>,"errors":<n>}}'` — it returns the run `id`.
+     application/json" "$SKUBE_API_URL/v1/runs" -d '{…}'` — it returns the run `id`. Body =
+     `{"brand":"<brand>","marketplace":"<marketplace>","country":"<country>","connection_label":"<label>",
+     "dry_run":<true|false>,"status":"<succeeded|partial|failed>","summary":{"skus_in":<n>,
+     "listings_created":<n>,"listings_updated":<n>,"errors":<n>}}`. **If you have a `feed_id` from CP0**
+     (uploaded or reused), add the key `"feed_id":"<the-uuid>"` — this lets the NEXT marketplace offer the
+     same file for reuse. **If you have none, OMIT the key entirely** — never send `"feed_id":""` (an empty
+     string fails validation → 422; an unowned/unknown uuid → 404).
   2. Upload the reusable outputs from the run folder (each `curl -s -X PUT -H "Authorization: Bearer
      $SKUBE_API_KEY" -F "file=@<run>/<file>" "$SKUBE_API_URL/v1/runs/<id>/artifacts/<kind>"`):
      the engine's `column_mapping.json`, a `listings.json` keyed by **SKU/EAN** built from the final
