@@ -38,11 +38,14 @@ their API key.** Prefer the connector identity; fall back to the browser device-
      you're still waiting for the Authorize click (re-show the link) and run `wait` again — up to
      ~7 times total, then treat it as expired. Prints "expired" → offer to restart with step 1.
 3. On approval the key is delivered and saved automatically (`~/.skube/.env`) — never shown. When
-   the script prints "SKUBE connected", say ONE short line ("✅ Connected." — in the user's language)
-   and then render the **Skube start card**
+   the script prints "SKUBE connected", say ONE short line ("✅ Connected." — in the user's language).
+   **In a cloud/headless session (the SKUBE-PENDING path was used): show the "stay connected"
+   connector block below IMMEDIATELY after that line — BEFORE the start card** (Mika 2026-07-17:
+   after the card nobody sees or does it; as the very next click it completes the setup).
+   THEN render the **Skube start card**
    exactly as specified in `${CLAUDE_PLUGIN_ROOT}/commands/start.md` (plain Markdown — never a widget,
    never `read_me`). The card — not prose — is the onboarding: it shows every job with its command and
-   the marketplaces.
+   the marketplaces. Desktop sessions: card directly, no connector block.
 4. Right after the card, ask ONCE (user's language, one line): "May Skube receive an anonymous
    run summary at the end of each run? Counters only — never product data. Helps prevent errors
    for everyone. (yes/no)". Only on an explicit yes:
@@ -56,10 +59,11 @@ their API key.** Prefer the connector identity; fall back to the browser device-
    app under Settings → Diagnostics & privacy.
 
 **Cloud sessions — make it permanent (once per account):** if this session had NO local browser
-(the script printed "open this link") and the device flow was used, the key only lives in THIS
+(the script printed "open this link" / the SKUBE-PENDING path was used), the key only lives in THIS
 session's sandbox. ⚠️ An "Authorize skube" dialog the session itself pops up does NOT persist in
-the browser — ONLY the link below creates the durable account connector. After the success line +
-card, offer the account-level fix in TWO short lines:
+the browser — ONLY the link below creates the durable account connector. Show this **right after
+"✅ Connected." and BEFORE the start card** (never after it — buried there it never gets clicked;
+Mika 2026-07-17), in TWO short lines:
 "To stay connected in every browser session, add Skube to your Claude account once:
 [open the connector dialog](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Skube&connectorUrl=https%3A%2F%2Fskube-mcp-production.up.railway.app%2Fmcp) → Name: `Skube` · URL: `https://skube-mcp-production.up.railway.app/mcp` → Add → Authorize.
 (Leave the optional OAuth fields empty — Claude registers itself.)"
