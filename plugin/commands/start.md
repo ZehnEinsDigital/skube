@@ -8,36 +8,42 @@ successful `/skube:connect`, (c) on the FIRST Skube mention in a new session wit
 user already names a concrete job (a file + "create listings…"), do NOT show the card — execute directly.
 Automatically at most once per session; on `/skube:start` always.
 
-## 🔴 KEEP IT INSTANT — Markdown only
+## 🔴 KEEP IT INSTANT — ONE call, paste verbatim
 
-Render the card as **plain Markdown** (the block below). **Do NOT build an HTML / `show_widget` widget for
-this card, and do NOT call `read_me`.** A widget here costs several extra tool round-trips + seconds of HTML
-generation for a menu that gains nothing from it — the cockpit must be up in ~1–2 seconds. **Speed wins.**
+The card comes **FINISHED from the server** (86catdj5z — live-measured: hand-composing it cost
+~2 minutes; the one-call path costs seconds). **Do NOT build an HTML / `show_widget` widget, do
+NOT call `read_me`, do NOT fetch `/v1/me/marketplaces`, do NOT re-render, translate, or edit the
+fetched card.** Paste it exactly as returned. **Speed wins.**
 
-**LANGUAGE:** English-first. If the session language differs (user writes e.g. German), translate ONLY the
-visible texts — the table structure and the `/skube:*` commands stay identical.
+## The flow (silently)
 
-## Determine state (silently — ONE quick check, no engine work)
+1. **Connected? CONNECTOR FIRST, unconditionally** (live incident 17.07.: a Desktop session
+   checked only the key file and rendered "not connected" while the working connector sat right
+   there — the card must never lie like that): ONE ToolSearch for `get_start_card` — available →
+   connected (tool-first; no key is ever created or saved), go straight to step 2's connector
+   branch. Not available → check `~/.skube/.env` for `SKUBE_API_KEY` → connected (keyed).
+   Neither → **not connected**: render the not-connected variant of the fallback card below and
+   stop. The key matters ONLY for local engine runs — a missing key alone NEVER means
+   "not connected".
+2. **Fetch the card — exactly ONE call** (pass the session language, `en` or `de`):
+   - Connector session: call the `get_start_card` tool → paste `markdown` verbatim.
+   - Keyed session: `curl -sf -m 5 -H "Authorization: Bearer $SKUBE_API_KEY"
+     "$SKUBE_API_URL/v1/skills/start-card?language=<lang>"` → paste the body verbatim
+     (`-f` = an auth error yields empty output → step 3, never a pasted error body).
+   An `en`/`de` card is pasted EXACTLY as returned — never translated or edited. ONLY for other
+   session languages: paste the English card, then translate the visible texts — table
+   structure and `/skube:*` commands stay identical.
+3. **Only if that call fails/times out:** render the FALLBACK card below (✅ Amazon DE · the
+   other 12 neutral — **NEVER** all-locked for a connected account).
 
-- **Connected?** `~/.skube/.env` contains a `SKUBE_API_KEY` → "✅ connected". If not, do ONE
-  ToolSearch for `get_playbook`: available → "✅ connected" too (the account is linked via the
-  Skube connector; every skill runs tool-first — no key is ever created or saved).
-  Neither → "⏸️ not connected yet" and make the FIRST table row the connect row
-  (`🔌 Connect | once, via browser | /skube:connect`).
-- **Marketplaces (only if connected):** exactly ONE call — `GET $SKUBE_API_URL/v1/me/marketplaces` (Bearer
-  key, 2s timeout). Mark each marketplace: `connected:true` → ✅ · `locked:false` → plain (Pro-unlocked,
-  connectable, no lock) · `locked:true` → 🔒 (upsell). If the call fails/times out → fall back to
-  ✅ Amazon DE · the other 12 neutral. **NEVER** label everything locked for a connected account. That is
-  the ONLY network call — nothing else, no further queries.
-
-## The card (this Markdown IS the whole output)
+## FALLBACK card (offline/not-connected only — the server card is the normal path)
 
 ```markdown
 ## 🧊 skube — your marketplace copilot — ✅ connected
 
 What would you like to do? Type the command — or just say it in your own words.
 
-| Job | Just say … | Command |
+| Skill | Just say … | Command |
 |---|---|---|
 | 📦 List | "list these products from my file" | `/skube:create` |
 | 🔧 Fix | "why was SKU … rejected? / is it live?" | `/skube:fix` |
@@ -47,24 +53,24 @@ What would you like to do? Type the command — or just say it in your own words
 | 📈 Report | "show my sales for the last 30 days" | `/skube:sales` |
 
 **Marketplaces:** ✅ Amazon DE · Otto · eBay · Kaufland · MediaMarktSaturn · Metro · ManoMano · OnBuy ·
-Leroy Merlin · Cdiscount · Decathlon · Voelkner · AboutYou — mark each from `/v1/me/marketplaces`
-(✅ connected · plain = Pro-unlocked/connectable · 🔒 = needs a higher tier). A Pro account shows its
-marketplaces open, NOT all-locked.
-**Mirakl storefronts (Voelkner · Decathlon · MediaMarktSaturn · Leroy Merlin):** these four run ON the
-Mirakl platform — the user never needs to know that. Mark each ✅ iff the `mirakl` entry has a
-connection whose `instance` matches (voelkner/decathlon/mediamarkt/leroymerlin). When the user picks
-one to work on, pin THAT connection's `credential_id` for the run — with several Mirakl connections
-choose by `instance`, never guess, never ask about "Mirakl".
+Leroy Merlin · Cdiscount · Decathlon · Voelkner · AboutYou
+*(✅ = connected · plain = ready to connect anytime)*
 
 **Next:** drop your product file into the chat = go · `/skube:start` shows this card anytime ·
 💬 `/skube:feedback` sends your words to the Skube team
 ```
 
 (Not connected → heading ends "— ⏸️ not connected yet"; the first table row is
-`🔌 Connect | once, via browser | /skube:connect`. Free/not-connected marketplace default: ✅ Amazon DE ·
-🔒 the other 12 — "unlock with Pro".)
+`🔌 Connect | once, via browser | /skube:connect`. Marketplace default when not connected:
+✅ Amazon DE · the other 12 plain — every tier may connect; locks only ever come from the
+server card.)
 
 After the card, ONE short line max ("Where do we start?" — session language). Never repeat the card as text.
+
+**Mirakl storefronts (Voelkner · Decathlon · MediaMarktSaturn · Leroy Merlin):** these four run ON the
+Mirakl platform — the user never needs to know that. When the user picks one to work on, pin THAT
+connection's `credential_id` for the run — with several Mirakl connections choose by `instance`,
+never guess, never ask about "Mirakl".
 
 ## Forbidden
 
