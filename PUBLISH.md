@@ -10,10 +10,15 @@ This folder is the complete public repo. First publish (you do this — needs yo
    git push -u origin main
    ```
 
-Re-publish after any change (the build preserves this folder's .git):
+Re-publish after any change (the build preserves this folder's .git and bases a fresh
+release branch on origin/main — the marketplace only re-ingests via PR + squash-merge,
+a direct push to main does NOT ship):
    ```
    ../../build-plugin-release.sh ZehnEinsDigital/skube
-   git add -A && git commit -m "update" && git push
+   git add -A && git commit -m "skube <version>"
+   git push -fu origin <the release-v… branch the build printed>
+   gh pr create --fill --repo ZehnEinsDigital/skube
+   gh pr merge <that branch> --squash --delete-branch --repo ZehnEinsDigital/skube
    ```
 
 Users install with:

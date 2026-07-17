@@ -286,21 +286,24 @@ def _post_json(url: str, payload: dict) -> dict:
         return json.loads(resp.read())
 
 
-def connect_via_browser(api_url: str, *, open_browser: bool = True, sleep=None, max_wait: int = 600):
-    """Browser device-auth (like `gh login`): no key paste, no file editing.
+def _device_pending_path() -> pathlib.Path:
+    return _config_env_path().parent / "device_pending.json"
 
-    Opens the Skube web app, the user clicks Authorize, and we receive the freshly-minted key
-    by polling — then save it to ~/.skube/.env. Returns the config path.
+
+def device_start(api_url: str, *, open_browser: bool = True) -> bool:
+    """Phase 1 of the device flow (86catc574): start, show the link, park the state.
+
+    In harnesses that render a command's output only AFTER it exits (Claude Code's Bash),
+    an in-process poll hides the authorize link behind a spinner forever — the cloud/headless
+    deadlock Mika hit live. So phase 1 prints the link + code, writes the pending state to
+    ~/.skube/device_pending.json (0600), and returns whether a LOCAL browser opened. The
+    device_code lives only in that file — never on stdout, never in the transcript.
     """
-    import time
     import webbrowser
 
-    sleep = sleep or time.sleep
     base = api_url.rstrip("/")
     start = _post_json(f"{base}/v1/auth/cli/device/start", {})
-    device_code, user_code = start["device_code"], start["user_code"]
-    url = f"{start['verification_uri']}?code={user_code}"
-    interval = int(start.get("interval", 3))
+    url = f"{start['verification_uri']}?code={start['user_code']}"
     # Try the local browser FIRST, then tell the truth about what happened: in a cloud/headless
     # session webbrowser.open() cannot reach the user's browser — the clickable link IS the flow
     # there, so it must lead and "opening your browser" must never be claimed falsely.
@@ -310,31 +313,82 @@ def connect_via_browser(api_url: str, *, open_browser: bool = True, sleep=None, 
             opened = bool(webbrowser.open(url))
         except Exception:  # noqa: BLE001
             opened = False
+    state = _device_pending_path()
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text(json.dumps({
+        "device_code": start["device_code"],
+        "api_url": base,
+        "interval": int(start.get("interval", 3)),
+    }), encoding="utf-8")
+    try:
+        os.chmod(state, 0o600)
+    except OSError:
+        pass
     if opened:
         print(
             "SKUBE: opening your browser to connect — if nothing opened, use this link:\n"
-            f"  {url}\n  (code: {user_code}) → click Authorize."
+            f"  {url}\n  (code: {start['user_code']}) → click Authorize."
         )
     else:
         print(
             "SKUBE: open this link to connect:\n"
-            f"  {url}\n  (check the code shows {user_code}) → click Authorize."
+            f"  {url}\n  (check the code shows {start['user_code']}) → click Authorize."
         )
+    return opened
+
+
+def device_wait(*, sleep=None, max_wait: int = 75):
+    """Phase 2: poll for the approval parked by device_start.
+
+    Bounded per call so the harness renders progress between calls; re-run until approved.
+    Returns the config path on approval, None while still pending (prints SKUBE-PENDING).
+    Exits with a plain message when the code expired or the state is missing.
+    """
+    import time
+
+    sleep = sleep or time.sleep
+    state_path = _device_pending_path()
+    if not state_path.exists():
+        raise SystemExit("SKUBE: no connection is waiting for approval — run /skube:connect first.")
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    base, device_code = state["api_url"], state["device_code"]
+    interval = max(1, int(state.get("interval", 3)))
     waited = 0
     while waited < max_wait:
         try:
             tok = _post_json(f"{base}/v1/auth/cli/device/token", {"device_code": device_code})
         except urllib.error.HTTPError as exc:
+            if exc.code >= 500:
+                # transient edge blip mid-login — the flow is still valid, keep polling
+                sleep(interval)
+                waited += interval
+                continue
+            state_path.unlink(missing_ok=True)
             if exc.code == 410:
-                raise SystemExit("SKUBE: this connection expired before you approved it. Run /skube:connect again.")
+                raise SystemExit("SKUBE: this connection expired before it was approved. Run /skube:connect again.")
             raise SystemExit(f"SKUBE: connect failed (HTTP {exc.code}).")
         except Exception as exc:  # noqa: BLE001
             raise SystemExit(f"SKUBE: could not reach the Skube API: {exc}")
         if tok.get("status") == "approved":
-            return save_api_key(tok["key"], api_url)
+            state_path.unlink(missing_ok=True)
+            return save_api_key(tok["key"], base)
         sleep(interval)
         waited += interval
-    raise SystemExit("SKUBE: authorization timed out. Run /skube:connect again.")
+    print("SKUBE-PENDING: not approved yet — the authorize link is still valid.")
+    return None
+
+
+def connect_via_browser(api_url: str, *, open_browser: bool = True, sleep=None, max_wait: int = 600):
+    """Browser device-auth (like `gh login`), single-shot: start + poll to completion.
+
+    The DESKTOP path (a local browser opened). Cloud/headless sessions must not use this —
+    connect.py exits after device_start there and drives device_wait as a second phase.
+    """
+    device_start(api_url, open_browser=open_browser)
+    dest = device_wait(sleep=sleep, max_wait=max_wait)
+    if dest is None:
+        raise SystemExit("SKUBE: authorization timed out. Run /skube:connect again.")
+    return dest
 
 
 def _safe_extract(blob: bytes, dest: pathlib.Path) -> int:
