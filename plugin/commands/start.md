@@ -20,14 +20,14 @@ visible texts — the table structure and the `/skube:*` commands stay identical
 ## Determine state (silently — ONE quick check, no engine work)
 
 - **Connected?** `~/.skube/.env` contains a `SKUBE_API_KEY` → "✅ connected". If not, do ONE
-  ToolSearch for `mint_session_key`: available → "✅ connected" too (the account is linked via the
-  Skube connector; the first job mints its key silently — do NOT mint here, keep the card instant).
+  ToolSearch for `get_playbook`: available → "✅ connected" too (the account is linked via the
+  Skube connector; every skill runs tool-first — no key is ever created or saved).
   Neither → "⏸️ not connected yet" and make the FIRST table row the connect row
   (`🔌 Connect | once, via browser | /skube:connect`).
 - **Marketplaces (only if connected):** exactly ONE call — `GET $SKUBE_API_URL/v1/me/marketplaces` (Bearer
   key, 2s timeout). Mark each marketplace: `connected:true` → ✅ · `locked:false` → plain (Pro-unlocked,
   connectable, no lock) · `locked:true` → 🔒 (upsell). If the call fails/times out → fall back to
-  ✅ Amazon DE · the other 13 neutral. **NEVER** label everything locked for a connected account. That is
+  ✅ Amazon DE · the other 12 neutral. **NEVER** label everything locked for a connected account. That is
   the ONLY network call — nothing else, no further queries.
 
 ## The card (this Markdown IS the whole output)
@@ -47,7 +47,7 @@ What would you like to do? Type the command — or just say it in your own words
 | 📈 Report | "show my sales for the last 30 days" | `/skube:sales` |
 
 **Marketplaces:** ✅ Amazon DE · Otto · eBay · Kaufland · MediaMarktSaturn · Metro · ManoMano · OnBuy ·
-Leroy Merlin · FNAC · Cdiscount · Decathlon · Voelkner · AboutYou — mark each from `/v1/me/marketplaces`
+Leroy Merlin · Cdiscount · Decathlon · Voelkner · AboutYou — mark each from `/v1/me/marketplaces`
 (✅ connected · plain = Pro-unlocked/connectable · 🔒 = needs a higher tier). A Pro account shows its
 marketplaces open, NOT all-locked.
 **Mirakl storefronts (Voelkner · Decathlon · MediaMarktSaturn · Leroy Merlin):** these four run ON the
@@ -62,12 +62,12 @@ choose by `instance`, never guess, never ask about "Mirakl".
 
 (Not connected → heading ends "— ⏸️ not connected yet"; the first table row is
 `🔌 Connect | once, via browser | /skube:connect`. Free/not-connected marketplace default: ✅ Amazon DE ·
-🔒 the other 13 — "unlock with Pro".)
+🔒 the other 12 — "unlock with Pro".)
 
 After the card, ONE short line max ("Where do we start?" — session language). Never repeat the card as text.
 
 ## Forbidden
 
 No HTML / `show_widget` widget for this card (that is the whole point — speed) · no `read_me` call · no
-ASCII boxes · no 7-step explanation (that belongs in the create flow) · ALWAYS write out all 14
+ASCII boxes · no 7-step explanation (that belongs in the create flow) · ALWAYS write out all 13
 marketplaces (never "among others") · never push the card into the middle of a running job.

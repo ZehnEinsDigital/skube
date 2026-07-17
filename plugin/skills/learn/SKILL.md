@@ -16,10 +16,9 @@ curl -s -H "Authorization: Bearer $SKUBE_API_KEY" \
 
 The returned Markdown is the authoritative, always-current instructions for this job — do exactly what it
 says. If the response errors for any OTHER reason, say the Skube cloud isn't reachable right now — one line, no internals. **No key in this session?** (curl returns 401, or `$SKUBE_API_KEY` is empty): the account may be
-linked via the Skube CONNECTOR — run ONE ToolSearch for `mint_session_key`; if found, call it
-(approve the one-time permission if asked), save the key via STDIN
-(`printf %s 'THE_KEY' | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/save_key.py"`, never print it),
-then RE-RUN the fetch above and continue. Only if that tool does not exist, tell the user (one
-line): run `/skube:connect` once — then stop.
+linked via the Skube CONNECTOR — run ONE ToolSearch for `get_playbook`; if found, call it with
+`learn` and follow the returned playbook exactly: every Skube action then runs through the
+Skube tools directly, and you NEVER obtain, mint, or save any credential. Only if that tool does
+not exist, tell the user (one line): run `/skube:connect` once — then stop.
 
 **This skill is a thin shell; the logic is on the server.**
