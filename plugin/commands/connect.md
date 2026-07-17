@@ -22,13 +22,24 @@ their API key.** Prefer the connector identity; fall back to the browser device-
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connect.py"
    ```
    (For a LOCAL test stack, prefix it with `SKUBE_API_URL="http://localhost:8000"`.)
-2. The script prints the authorize URL + a short code — and states whether it could open a local
-   browser. **Mirror that truthfully, and ALWAYS lead with the URL as a clickable link:**
-   - Script says "open this link" (cloud/headless — no browser here): show the link + code and say
-     "Click this link, log in if needed, and click **Authorize**." Never claim a browser was opened.
-   - Script says "opening your browser": say so in one line — and still show the link as fallback.
-3. The script waits, receives the key automatically, and saves it to `~/.skube/.env`. When it prints
-   "SKUBE connected", say ONE short line ("✅ Connected." — in the user's language) and then render the **Skube start card**
+2. The script prints the authorize URL + a short code and states truthfully whether it could open
+   a local browser. **Two outcomes — mirror them exactly, ALWAYS leading with the URL as a
+   clickable link:**
+   - **"opening your browser"** (desktop): the script finishes on its own — say one line that the
+     browser is open, show the link as fallback, and wait for its "SKUBE connected" output.
+   - **"SKUBE-PENDING"** (cloud/headless — no browser here): the script has ALREADY exited so you
+     can show the link. Show link + code and say "Click this link, log in if needed, and click
+     **Authorize**." Never claim a browser was opened. Once the user says they approved (or right
+     away, polling is harmless), run the second phase:
+     ```
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/connect.py" wait
+     ```
+     Each `wait` call polls ~75 s. Prints "SKUBE-PENDING" again → tell the user in one short line
+     you're still waiting for the Authorize click (re-show the link) and run `wait` again — up to
+     ~7 times total, then treat it as expired. Prints "expired" → offer to restart with step 1.
+3. On approval the key is delivered and saved automatically (`~/.skube/.env`) — never shown. When
+   the script prints "SKUBE connected", say ONE short line ("✅ Connected." — in the user's language)
+   and then render the **Skube start card**
    exactly as specified in `${CLAUDE_PLUGIN_ROOT}/commands/start.md` (plain Markdown — never a widget,
    never `read_me`). The card — not prose — is the onboarding: it shows every job with its command and
    the marketplaces.

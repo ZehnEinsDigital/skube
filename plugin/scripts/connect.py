@@ -25,7 +25,25 @@ import connection  # noqa: E402  (same scripts dir)
 def main() -> None:
     bootstrap.load_dotenv()  # pick up SKUBE_API_URL from ~/.skube/.env (GUI has no shell env)
     api_url = (os.environ.get("SKUBE_API_URL") or bootstrap.DEFAULT_API_URL).strip()
-    dest = bootstrap.connect_via_browser(api_url)
+    if len(sys.argv) > 1 and sys.argv[1] == "wait":
+        # Phase 2 (cloud/headless): poll for the approval parked by a previous run. Bounded —
+        # prints SKUBE-PENDING and exits cleanly while not yet approved; the trigger re-runs it.
+        dest = bootstrap.device_wait()
+        if dest is None:
+            return
+    else:
+        opened = bootstrap.device_start(api_url)
+        if not opened:
+            # No local browser (cloud/headless): exit NOW so the link above actually renders —
+            # polling in-process would hide it behind a spinner until the code expires.
+            print(
+                "SKUBE-PENDING: waiting for approval. After the user clicked Authorize, run "
+                "this script again with the argument: wait"
+            )
+            return
+        dest = bootstrap.device_wait(max_wait=600)  # desktop: browser is open, finish in one go
+        if dest is None:
+            raise SystemExit("SKUBE: authorization timed out. Run /skube:connect again.")
     # Auto-pin when the account has exactly ONE connection, so a single-seller never has to
     # re-pick "which account?" in a later (or compacted) session. Several (agency) → leave
     # unpinned; the skill asks which, then pins. Best-effort: never fail connect over this.
