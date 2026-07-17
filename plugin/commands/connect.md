@@ -8,17 +8,14 @@ their API key.** Prefer the connector identity; fall back to the browser device-
 
 0. **CONNECTOR FIRST — a 5-second check, never an investigation:** connector tools are often
    DEFERRED (not in the visible list) — so do exactly ONE lookup: check your current tool list
-   for `mint_session_key` (scoped names look like `mcp__plugin_skube_skube__mint_session_key` or
-   `mcp__skube__mint_session_key`), and if it's not visible, run ONE ToolSearch for
-   `mint_session_key`. **That single search decides. Do NOT read plugin files, do NOT search the
-   filesystem, do NOT deliberate — no result → go straight to step 1.** If the tool IS available:
-   call it (approve the one-time permission prompt if asked), then save the returned key via
-   STDIN (never argv, never echo it):
-   ```
-   printf %s 'THE_KEY' | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/save_key.py"
-   ```
-   Then continue at step 3's card (skip the device flow and step 4's telemetry question only if
-   already answered before). If the tool call errors, fall through to the device flow below.
+   for `get_playbook` (scoped names look like `mcp__plugin_skube_skube__get_playbook` or
+   `mcp__skube__get_playbook`), and if it's not visible, run ONE ToolSearch for
+   `get_playbook`. **That single search decides. Do NOT read plugin files, do NOT search the
+   filesystem, do NOT deliberate — no result → go straight to step 1.** If the tool IS
+   available: the account is already connected via the Skube connector — every skill runs
+   tool-first, NO key is created or saved, nothing else to set up. Say so in one line, render
+   step 3's card, and STOP (the device flow below is only for machines that will run local
+   engine jobs like /skube:create — offer it only if the user asks for local runs).
 
 1. Run:
    ```
@@ -68,4 +65,4 @@ language ("The connection didn't work — I'll report it to the Skube team.") an
 `/skube:feedback`. Do NOT stream debugging steps or internals at the user; keep any diagnosis to
 yourself unless the user explicitly asks for details.
 
-Never request or display the API key. Device flow: the script handles the key end to end. Connector branch: pass the minted key ONLY into save_key.py via stdin and never print it in your reply.
+Never request or display the API key. Device flow: the script handles the key end to end. Connector branch: NO key exists at all — everything runs through the Skube tools; never create, save, or mention credentials in your reply.

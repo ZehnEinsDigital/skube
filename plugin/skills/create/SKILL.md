@@ -89,8 +89,9 @@ required** (categories/schemas are served only to a connected account).
 The engine's brain and per-checkpoint instructions live in `$SKUBE_ENGINE_DIR/CLAUDE.md` and
 `$SKUBE_ENGINE_DIR/.claude/agents/`. Read them as you go and follow them, but **execute every step here**
 and **dispatch each checkpoint as its own sub-agent (Task)** — the engine's hard rule is *one checkpoint
-per agent call*. **Give each sub-agent the SMALLEST matching instruction set — a checkpoint SLICE when
-one exists** (`.claude/agents/amazon-adapter/slices/CP2.md` / `CP4.md` / `CP5.md` / `CP6.md`), falling back to
+per agent call*. **Give each sub-agent the SMALLEST matching instruction set — the CHOSEN marketplace's checkpoint
+SLICE when one exists** (`.claude/agents/<mp>-adapter/slices/CP*.md` — e.g. amazon has CP2/CP4/CP5/CP6,
+aboutyou has CP2/CP6; check the adapter's `slices/` dir), falling back to
 the full SOP only when there is no slice (e.g. `.claude/agents/supplier-analyzer/SOP.md` for CP1). Never
 hand a sub-agent the full SOP+CONFIG+CLAUDE.md stack when a slice covers its checkpoint — that context
 bloat is what makes checkpoints slow. Always add: the run context, `injected_rules.md`, AND the resolved
@@ -204,8 +205,10 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   required fields, connect once — a quick sign-in (your Free plan includes one connection), then it all runs
   through."* → `/skube:connect`, then pin the connection (step 0b) and continue. Never a paywall/error tone;
   the CP0–CP1 analysis you already showed proves the value. Then: use the product groups CP1 already found and
-  resolve the matching Amazon
-  product types by **targeted search** — for each group, call the cloud's product-type search with fitting
+  resolve the matching categories/product types **for the CHOSEN marketplace** — non-Amazon marketplaces
+  per their adapter's CP2 slice or SOP (e.g. AboutYou: `GET /v1/aboutyou/categories` per
+  `aboutyou-adapter/slices/CP2.md`; Otto/Kaufland/Mirakl/…: their category reads via `marketplace_call`).
+  For **Amazon**: resolve product types by **targeted search** — for each group, call the cloud's product-type search with fitting
   keywords (e.g. "aluminium foil", "cling film / Frischhaltefolie", "baking paper / Backpapier"), pick the
   best matches, and fetch the schema **only for those matched types**. **NEVER run a full catalog sync** —
   do NOT invoke `core/amazon_sync.py` or sync/iterate the whole product-type catalog. Only the seller's own
@@ -236,7 +239,7 @@ CP1/CP2/CP4 (judgment checkpoints) stay on the session model.
   **Never fabricate** — no data and nothing safely derivable → leave it empty. Tell the user the coverage
   (X fields, Y filled, Z intentionally empty), not just the required count. **If GPSR data is missing, ask
   the user here** (responsible party, manufacturer contact) — never invent it.
-- **CP6 — Validate + upload:** follow the **cloud CP6 slice** (`.claude/agents/amazon-adapter/slices/CP6.md`
+- **CP6 — Validate + upload:** follow the **CHOSEN marketplace's cloud CP6 slice** (`.claude/agents/<mp>-adapter/slices/CP6.md`
   from `$SKUBE_ENGINE_DIR`, pulled at runtime — the operative mechanics live there, server-side, not in this
   shell): local validation for ALL, live `VALIDATION_PREVIEW` sample ≤3, the `live_writes_enabled` upload
   preflight, and the two-step `live-intents`→`submit` write flow with its `mode: LIVE` self-check. Cross-cutting
