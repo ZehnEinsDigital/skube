@@ -17,14 +17,21 @@ fetched card.** Paste it exactly as returned. **Speed wins.**
 
 ## The flow (silently)
 
-1. **Connected? CONNECTOR FIRST, unconditionally** (live incident 17.07.: a Desktop session
-   checked only the key file and rendered "not connected" while the working connector sat right
-   there — the card must never lie like that): ONE ToolSearch for `get_start_card` — available →
-   connected (tool-first; no key is ever created or saved), go straight to step 2's connector
-   branch. Not available → check `~/.skube/.env` for `SKUBE_API_KEY` → connected (keyed).
-   Neither → **not connected**: render the not-connected variant of the fallback card below and
-   stop. The key matters ONLY for local engine runs — a missing key alone NEVER means
-   "not connected".
+1. **Connected? CONNECTOR FIRST, unconditionally** (live incidents 17.07.: one session checked
+   only the key file; another had the connector but a STALE cached tool list without
+   `get_start_card` — both rendered a false "not connected"; the card must never lie): ONE
+   ToolSearch with the plain KEYWORD query `get_start_card` — **never `select:` — connector
+   tools carry long scoped names (like `mcp__<id>__get_start_card`) and only keyword search
+   matches them** (live incident #4: `select:get_start_card` returned nothing while the tool
+   sat in the list). Not found → ONE keyword ToolSearch for `get_playbook`. **EITHER
+   found → connected via the connector** (tool-first; no key is ever created or saved):
+   `get_start_card` available → step 2's connector branch; only `get_playbook` available (the
+   app is holding an older tool snapshot) → render the FALLBACK card below in its CONNECTED
+   form and add one line: "Tip: in Settings → Connectors → Skube choose 'Refresh tools list' —
+   the cockpit gets faster." Neither tool → check `~/.skube/.env` for `SKUBE_API_KEY` →
+   connected (keyed). Nothing at all → **not connected**: render the not-connected variant of
+   the fallback card and stop. The key matters ONLY for local engine runs — a missing key
+   alone NEVER means "not connected".
 2. **Fetch the card — exactly ONE call** (pass the session language, `en` or `de`):
    - Connector session: call the `get_start_card` tool → paste `markdown` verbatim.
    - Keyed session: `curl -sf -m 5 -H "Authorization: Bearer $SKUBE_API_KEY"

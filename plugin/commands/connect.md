@@ -9,13 +9,20 @@ their API key.** Prefer the connector identity; fall back to the browser device-
 0. **CONNECTOR FIRST — a 5-second check, never an investigation:** connector tools are often
    DEFERRED (not in the visible list) — so do exactly ONE lookup: check your current tool list
    for `get_playbook` (scoped names look like `mcp__plugin_skube_skube__get_playbook` or
-   `mcp__skube__get_playbook`), and if it's not visible, run ONE ToolSearch for
-   `get_playbook`. **That single search decides. Do NOT read plugin files, do NOT search the
-   filesystem, do NOT deliberate — no result → go straight to step 1.** If the tool IS
-   available: the account is already connected via the Skube connector — every skill runs
-   tool-first, NO key is created or saved, nothing else to set up. Say so in one line, render
-   step 3's card, and STOP (the device flow below is only for machines that will run local
-   engine jobs like /skube:create — offer it only if the user asks for local runs).
+   `mcp__skube__get_playbook`), and if it's not visible, run ONE KEYWORD ToolSearch for
+   `get_playbook` (never `select:` — scoped names need keyword matching). **That single search
+   decides. Do NOT read plugin files, do NOT search the filesystem, do NOT deliberate — no
+   result → go straight to step 1.** If the tool IS available, the ACCOUNT is already
+   connected — now complete the MACHINE (Mika's onboarding ruling 17.07.: connect = make this
+   computer fully ready, three mandatory steps end here):
+   - `~/.skube/.env` already has a `SKUBE_API_KEY` → everything is set up. ONE line
+     ("✅ All set — account and this computer are connected.") + step 3's card, STOP.
+   - No key → ONE line in seller language: "Your account is connected ✓ — one more click links
+     THIS computer so it can build listings." Then run step 1's script (the browser link
+     flow) and continue through steps 2–3 as written. NO key talk beyond that line; the
+     account connection keeps carrying every skill either way, so if the user declines or the
+     link fails, they are still fully connected for everything except local listing builds —
+     never block them, never nag twice in a session.
 
 1. Run:
    ```
